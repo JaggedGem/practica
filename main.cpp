@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include <filesystem>
+#include <algorithm>
 
 using namespace std;
 
@@ -48,6 +49,16 @@ void allChannels() {
 }
 
 void addShow(string name, string category, string startTime, int duration, string dayOfWeek, string channelCode) {
+    if (name.empty() || category.empty() || startTime.empty() || duration <= 0 || dayOfWeek.empty() || channelCode.empty() ) {
+        cout << "Invalid input. Please provide valid show details." << endl;
+        return;
+    }
+
+    if (any_of(programs.begin(), programs.end(), [&name](const show& s) { return s.name == name; })) {
+        cout << "Show with this name already exists." << endl;
+        return;
+    }
+
     show s;
     s.name = move(name);
     s.category =  move(category);
@@ -63,6 +74,16 @@ void addShow(string name, string category, string startTime, int duration, strin
 }
 
 void addChannel(string code, string name, string originCountry) {
+    if (code.empty() || name.empty() || originCountry.empty()) {
+        cout << "Invalid input. Please provide valid show details." << endl;
+        return;
+    }
+
+    if (any_of(channels.begin(), channels.end(), [&code](const channel& c) { return c.code == code; }) || any_of(channels.begin(), channels.end(), [&name](const channel& c) { return c.name == name; })) {
+        cout << "Channel with this code or name already exists." << endl;
+        return;
+    }
+
     channel c;
     c.code = move(code);
     c.name = move(name);
