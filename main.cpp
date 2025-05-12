@@ -4,6 +4,7 @@
 #include <utility>
 #include <vector>
 #include <sstream>
+#include <filesystem>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ struct show {
 struct channel {
     string code;
     string name;
-    string type;
+    string originCountry;
 };
 
 vector<show> programs;
@@ -41,7 +42,7 @@ void allChannels() {
     for (auto &c : channels) {
         cout << "Code: " << c.code << endl;
         cout << "Name: " << c.name << endl;
-        cout << "Type: " << c.type << endl;
+        cout << "Country of Origin: " << c.originCountry << endl;
         cout << endl;
     }
 }
@@ -56,13 +57,25 @@ void addShow(string name, string category, string startTime, int duration, strin
     s.channelCode =  move(channelCode);
     programs.push_back(s);
 
-    ofstream o("Program.txt");
-    o << s.name << " " << s.category << " " << s.startTime << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode << endl;
+    ofstream o("../Program.txt", ios::app);
+    o << endl << s.name << " " << s.category << " " << s.startTime << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode;
+    o.close();
+}
+
+void addChannel(string code, string name, string originCountry) {
+    channel c;
+    c.code = move(code);
+    c.name = move(name);
+    c.originCountry = move(originCountry);
+    channels.push_back(c);
+
+    ofstream o("../Channel.txt", ios::app);
+    o << endl << c.code << " " << c.name << " " << c.originCountry;
     o.close();
 }
 
 int main() {
-    ifstream  p("Program.txt");
+    ifstream  p("../Program.txt");
     string line;
     while (getline( p, line)) {
         show s;
@@ -71,11 +84,11 @@ int main() {
         programs.push_back(s);
     }
 
-    ifstream ch("Channel.txt");
+    ifstream ch("../Channel.txt");
     while (getline(ch, line)) {
         channel c;
         stringstream ss(line);
-        ss >> c.code >> c.name >> c.type;
+        ss >> c.code >> c.name >> c.originCountry;
         channels.push_back(c);
     }
 
@@ -87,6 +100,9 @@ int main() {
     cout << endl;
     allShows();
 
+    addChannel("0001", "testChannel", "testCountry");
+    cout << endl;
+    allChannels();
 
     p.close();
     return 0;
