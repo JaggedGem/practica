@@ -95,6 +95,24 @@ void addChannel(string code, string name, string originCountry) {
     o.close();
 }
 
+void deleteShow(string name) {
+    if (name.empty()) {
+        cout << "Invalid input. Please provide valid show details." << endl;
+        return;
+    }
+    auto it = remove_if(programs.begin(), programs.end(), [&name](const show& s) { return s.name == name; });
+    if (it != programs.end()) {
+        programs.erase(it, programs.end());
+        cout << "Show deleted successfully." << endl;
+    } else {
+        cout << "Show not found." << endl;
+    }
+    ofstream o("../Program.txt");
+    for (const auto& s : programs) {
+        o << s.name << " " << s.category << " " << s.startTime << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode << endl;
+    }
+}
+
 int main() {
     ifstream  p("../Program.txt");
     string line;
@@ -124,6 +142,8 @@ int main() {
     addChannel("0001", "testChannel", "testCountry");
     cout << endl;
     allChannels();
+
+    deleteShow("testName");
 
     p.close();
     return 0;
