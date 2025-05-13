@@ -131,6 +131,73 @@ void deleteChannel(string name) {
     }
 }
 
+void editShow(string name, string newName = "", string newCategory = "", string newStartTime = "", int newDuration = -1, string newDayOfWeek = "", string newChannelCode = "") {
+    if (name.empty()) {
+        cout << "Invalid input. Please provide valid show details." << endl;
+        return;
+    }
+
+    auto it = find_if(programs.begin(), programs.end(), [&name](const show& s) { return s.name == name; });
+    if (it != programs.end()) {
+        cout << "Editing show: " << it->name << endl;
+        cout << "Enter new details (leave blank to keep current value):" << endl;
+
+        if (newName == "") {
+            cout << "Name: ";
+            getline(cin, newName);
+            it->name = move(newName);
+        } else {
+            it->name = move(newName);
+        }
+        if (newCategory == "") {
+            cout << "Category: ";
+            getline(cin, newCategory);
+            it->category = move(newCategory);
+        } else {
+            it->category = move(newCategory);
+        }
+        if (newStartTime == "") {
+            cout << "Start Time: ";
+            getline(cin, newStartTime);
+            it->startTime = move(newStartTime);
+        } else {
+            it->startTime = move(newStartTime);
+        }
+        if (newDuration == -1) {
+            cout << "Duration: ";
+            cin >> newDuration;
+            cin.ignore();
+            it->duration = newDuration;
+        } else {
+            it->duration = newDuration;
+        }
+        if (newDayOfWeek == "") {
+            cout << "Day of Week: ";
+            getline(cin, newDayOfWeek);
+            it->dayOfWeek = move(newDayOfWeek);
+        } else {
+            it->dayOfWeek = move(newDayOfWeek);
+        }
+        if (newChannelCode == "") {
+            cout << "Channel Code: ";
+            getline(cin, newChannelCode);
+            it->channelCode = move(newChannelCode);
+        } else {
+            it->channelCode = move(newChannelCode);
+        }
+
+        ofstream o("../Program.txt");
+        for (const auto& s : programs) {
+            o << s.name << " " << s.category << " " << s.startTime << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode << endl;
+        }
+        o.close();
+
+        cout << "Show updated successfully." << endl;
+    } else {
+        cout << "Show not found." << endl;
+    }
+}
+
 int main() {
     ifstream  p("../Program.txt");
     string line;
@@ -159,9 +226,11 @@ int main() {
     addChannel("0009", "testChannel", "testCountry");
     cout << "------------------------" << endl << endl;
 
-    deleteShow("testName");
+    // deleteShow("testName");
     cout << "------------------------" << endl << endl;
     deleteChannel("testChannel");
+
+    editShow("testName", "newName", "newCategory", "newTime", -1, "newDay", "newCode");
 
     p.close();
     return 0;
