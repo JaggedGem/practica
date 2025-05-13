@@ -131,7 +131,7 @@ void deleteChannel(string name) {
     }
 }
 
-void editShow(string name, string newName = "", string newCategory = "", string newStartTime = "", int newDuration = -1, string newDayOfWeek = "", string newChannelCode = "") {
+void editShow(string name, string newName = "", string newCategory = "", string newStartTime = "", int newDuration = 0, string newDayOfWeek = "", string newChannelCode = "") {
     if (name.empty()) {
         cout << "Invalid input. Please provide valid show details." << endl;
         return;
@@ -140,48 +140,77 @@ void editShow(string name, string newName = "", string newCategory = "", string 
     auto it = find_if(programs.begin(), programs.end(), [&name](const show& s) { return s.name == name; });
     if (it != programs.end()) {
         cout << "Editing show: " << it->name << endl;
-        cout << "Enter new details (leave blank to keep current value):" << endl;
 
-        if (newName == "") {
+        if (newName.empty() || newCategory.empty() || newStartTime.empty() ||
+            newDuration == 0 || newDayOfWeek.empty() || newChannelCode.empty()) {
+            cout << "Enter new details (leave blank to keep current value):" << endl;
+        }
+
+        if (newName.empty()) {
             cout << "Name: ";
             getline(cin, newName);
-            it->name = move(newName);
+            if (any_of(programs.begin(), programs.end(), [&newName](const show& s) { return s.name == newName; })) {
+                cout << "Show with this name already exists." << endl;
+                return;
+            }
+            if (!newName.empty()) {
+                it->name = move(newName);
+            }
         } else {
+            if (any_of(programs.begin(), programs.end(), [&newName](const show& s) { return s.name == newName; })) {
+                cout << "Show with this name already exists." << endl;
+                return;
+            }
             it->name = move(newName);
         }
-        if (newCategory == "") {
+        if (newCategory.empty()) {
             cout << "Category: ";
             getline(cin, newCategory);
-            it->category = move(newCategory);
+            if (!newCategory.empty()) {
+                it->category = move(newCategory);
+            }
         } else {
             it->category = move(newCategory);
         }
-        if (newStartTime == "") {
+        if (newStartTime.empty()) {
             cout << "Start Time: ";
             getline(cin, newStartTime);
-            it->startTime = move(newStartTime);
+            if (!newStartTime.empty()) {
+                it->startTime = move(newStartTime);
+            }
         } else {
             it->startTime = move(newStartTime);
         }
-        if (newDuration == -1) {
+        if (!newDuration) {
             cout << "Duration: ";
             cin >> newDuration;
             cin.ignore();
-            it->duration = newDuration;
+            if (newDuration < 0) {
+                cout << "Invalid duration. Please provide a valid duration." << endl;
+                return;
+            }
+
+            if (newDuration != 0) {
+                it->duration = newDuration;
+            }
         } else {
             it->duration = newDuration;
         }
-        if (newDayOfWeek == "") {
+        if (newDayOfWeek.empty()) {
             cout << "Day of Week: ";
             getline(cin, newDayOfWeek);
-            it->dayOfWeek = move(newDayOfWeek);
+            if (!newDayOfWeek.empty()) {
+                it->dayOfWeek = move(newDayOfWeek);
+            }
         } else {
             it->dayOfWeek = move(newDayOfWeek);
         }
-        if (newChannelCode == "") {
+        if (newChannelCode.empty()) {
             cout << "Channel Code: ";
             getline(cin, newChannelCode);
-            it->channelCode = move(newChannelCode);
+            if (!newChannelCode.empty()) {
+                it->channelCode = move(newChannelCode);
+            }
         } else {
             it->channelCode = move(newChannelCode);
         }
@@ -195,6 +224,78 @@ void editShow(string name, string newName = "", string newCategory = "", string 
         cout << "Show updated successfully." << endl;
     } else {
         cout << "Show not found." << endl;
+    }
+}
+
+void editChannel(string name, string newCode = "", string newName = "", string newOriginCountry = "") {
+    if (name.empty()) {
+        cout << "Invalid input. Please provide valid show details." << endl;
+        return;
+    }
+
+    auto it = find_if(channels.begin(), channels.end(), [&name](const channel& c) { return c.name == name; });
+    if (it != channels.end()) {
+        cout << "Editing channel: " << it->name << endl;
+
+        if (newCode.empty() || newName.empty() || newOriginCountry.empty()) {
+            cout << "Enter new details (leave blank to keep current value):" << endl;
+        }
+
+        if (newCode.empty()) {
+            cout << "Code: ";
+            getline(cin, newCode);
+            if (any_of(channels.begin(), channels.end(), [&newCode](const channel& c) { return c.code == newCode; })) {
+                cout << "Channel with this code already exists." << endl;
+                return;
+            }
+            if (!newCode.empty()) {
+                it->code = move(newCode);
+            }
+        } else {
+            if (any_of(channels.begin(), channels.end(), [&newCode](const channel& c) { return c.code == newCode; })) {
+                cout << "Channel with this code already exists." << endl;
+                return;
+            }
+            it->code = move(newCode);
+        }
+
+        if (newName.empty()) {
+            cout << "Name: ";
+            getline(cin, newName);
+            if (any_of(channels.begin(), channels.end(), [&newName](const channel& c) { return c.name == newName; })) {
+                cout << "Channel with this name already exists." << endl;
+                return;
+            }
+            if (!newName.empty()) {
+                it->name = move(newName);
+            }
+        } else {
+            if (any_of(channels.begin(), channels.end(), [&newName](const channel& c) { return c.name == newName; })) {
+                cout << "Channel with this name already exists." << endl;
+                return;
+            }
+            it->name = move(newName);
+        }
+
+        if (newOriginCountry.empty()) {
+            cout << "Origin Country: ";
+            getline(cin, newOriginCountry);
+            if (!newOriginCountry.empty()) {
+                it->originCountry = move(newOriginCountry);
+            }
+        } else {
+            it->originCountry = move(newOriginCountry);
+        }
+
+        ofstream o("../Channel.txt");
+        for (const auto& c : channels) {
+            o << c.code << " " << c.name << " " << c.originCountry << endl;
+        }
+        o.close();
+
+        cout << "Channel updated successfully." << endl;
+    } else {
+        cout << "Channel not found." << endl;
     }
 }
 
@@ -226,11 +327,13 @@ int main() {
     addChannel("0009", "testChannel", "testCountry");
     cout << "------------------------" << endl << endl;
 
-    // deleteShow("testName");
+    deleteShow("testName");
     cout << "------------------------" << endl << endl;
-    deleteChannel("testChannel");
+    // deleteChannel("testChannel");
 
     editShow("testName", "newName", "newCategory", "newTime", -1, "newDay", "newCode");
+    cout << "------------------------" << endl << endl;
+    editChannel("testChannel", "newCode", "newName", "newCountry");
 
     p.close();
     return 0;
