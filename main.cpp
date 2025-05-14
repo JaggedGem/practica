@@ -495,6 +495,20 @@ void minShow() {
     }
 }
 
+void averageShow() {
+    int sum = 0, count = 0;
+    for (auto& s : programs) {
+        sum += s.duration;
+        count++;
+    }
+    if (count == 0) {
+        cout << "No shows available." << endl;
+    } else {
+        double average = static_cast<double>(sum) / count;
+        cout << "Average duration of shows: " << average << " minutes." << endl;
+    }
+}
+
 void showMenu() {
     int choice;
     string name, category, dayOfWeek, channelCode, code, originCountry;
@@ -513,7 +527,8 @@ void showMenu() {
         cout << "9. Show shows on a specific day" << endl;
         cout << "10. Show longest show" << endl;
         cout << "11. Show shortest show" << endl;
-        cout << "12. Exit" << endl;
+        cout << "12. Average show" << endl;
+        cout << "13. Exit" << endl;
         cout << "Enter your choice: ";
         cin >> choice;
         cin.ignore();
@@ -584,13 +599,16 @@ void showMenu() {
                 minShow();
                 break;
             case 12:
+                averageShow();
+                break;
+            case 13:
                 cout << "Exiting program. Goodbye!" << endl;
                 break;
             default:
                 cout << "Invalid choice. Please try again." << endl;
                 break;
         }
-    } while (choice != 12);
+    } while (choice != 13);
 }
 
 int main() {
