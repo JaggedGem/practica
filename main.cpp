@@ -299,6 +299,88 @@ void editChannel(string name, string newCode = "", string newName = "", string n
     }
 }
 
+void showMenu() {
+    int choice;
+    string name, category, startTime, dayOfWeek, channelCode, code, originCountry;
+    int duration;
+
+    do {
+        cout << "\n===== TV Program Management System =====" << endl;
+        cout << "1. Show all shows" << endl;
+        cout << "2. Show all channels" << endl;
+        cout << "3. Add show" << endl;
+        cout << "4. Add channel" << endl;
+        cout << "5. Delete show" << endl;
+        cout << "6. Delete channel" << endl;
+        cout << "7. Edit show" << endl;
+        cout << "8. Edit channel" << endl;
+        cout << "9. Exit" << endl;
+        cout << "Enter your choice: ";
+        cin >> choice;
+        cin.ignore();
+
+        switch (choice) {
+            case 1:
+                allShows();
+                break;
+            case 2:
+                allChannels();
+                break;
+            case 3:
+                cout << "Enter show name: ";
+                getline(cin, name);
+                cout << "Enter category: ";
+                getline(cin, category);
+                cout << "Enter start time (HH:MM): ";
+                getline(cin, startTime);
+                cout << "Enter duration (minutes): ";
+                cin >> duration;
+                cin.ignore();
+                cout << "Enter day of week: ";
+                getline(cin, dayOfWeek);
+                cout << "Enter channel code: ";
+                getline(cin, channelCode);
+                addShow(name, category, startTime, duration, dayOfWeek, channelCode);
+                break;
+            case 4:
+                cout << "Enter channel code: ";
+                getline(cin, code);
+                cout << "Enter channel name: ";
+                getline(cin, name);
+                cout << "Enter origin country: ";
+                getline(cin, originCountry);
+                addChannel(code, name, originCountry);
+                break;
+            case 5:
+                cout << "Enter name of show to delete: ";
+                getline(cin, name);
+                deleteShow(name);
+                break;
+            case 6:
+                cout << "Enter name of channel to delete: ";
+                getline(cin, name);
+                deleteChannel(name);
+                break;
+            case 7:
+                cout << "Enter name of show to edit: ";
+                getline(cin, name);
+                editShow(name);
+                break;
+            case 8:
+                cout << "Enter name of channel to edit: ";
+                getline(cin, name);
+                editChannel(name);
+                break;
+            case 9:
+                cout << "Exiting program. Goodbye!" << endl;
+                break;
+            default:
+                cout << "Invalid choice. Please try again." << endl;
+                break;
+        }
+    } while (choice != 9);
+}
+
 int main() {
     ifstream  p("../Program.txt");
     string line;
@@ -317,23 +399,7 @@ int main() {
         channels.push_back(c);
     }
 
-    allShows();
-    cout << "------------------------" << endl << endl;
-    allChannels();
-
-    addShow("testName", "testCategory", "testTime", 120, "Monday", "testCode");
-    cout << "------------------------" << endl << endl;
-
-    addChannel("0009", "testChannel", "testCountry");
-    cout << "------------------------" << endl << endl;
-
-    deleteShow("testName");
-    cout << "------------------------" << endl << endl;
-    // deleteChannel("testChannel");
-
-    editShow("testName", "newName", "newCategory", "newTime", -1, "newDay", "newCode");
-    cout << "------------------------" << endl << endl;
-    editChannel("testChannel", "newCode", "newName", "newCountry");
+    showMenu();
 
     p.close();
     return 0;
