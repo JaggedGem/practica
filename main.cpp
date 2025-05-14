@@ -12,7 +12,8 @@ using namespace std;
 struct show {
     string name;
     string category;
-    string startTime;
+    int startHour;
+    int startMinute;
     int duration; // in minutes
     string dayOfWeek;
     string channelCode;
@@ -31,7 +32,7 @@ void allShows() {
     for (auto &s : programs) {
         cout << "Name: " << s.name << endl;
         cout << "Category: " << s.category << endl;
-        cout << "Start Time: " << s.startTime << endl;
+        cout << "Start Time: " << (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) << ":" << (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute)) << endl;
         cout << "Duration: " << s.duration << endl;
         cout << "Day of Week: " << s.dayOfWeek << endl;
         cout << "Channel Code: " << s.channelCode << endl;
@@ -49,7 +50,7 @@ void allChannels() {
 }
 
 void addShow(string name, string category, string startTime, int duration, string dayOfWeek, string channelCode) {
-    if (name.empty() || category.empty() || startTime.empty() || duration <= 0 || dayOfWeek.empty() || channelCode.empty() ) {
+    if (name.empty() || category.empty() || startTime.empty() || duration <= 0 || dayOfWeek.empty() || channelCode.empty()) {
         cout << "Invalid input. Please provide valid show details." << endl;
         return;
     }
@@ -59,18 +60,60 @@ void addShow(string name, string category, string startTime, int duration, strin
         return;
     }
 
+    // Check if channel code exists
+    bool channelExists = any_of(channels.begin(), channels.end(),
+                               [&channelCode](const channel& c) { return c.code == channelCode; });
+    if (!channelExists) {
+        cout << "Error: Channel code does not exist. Please enter a valid channel code." << endl;
+        return;
+    }
+
+    // Parse and validate start time
+    int startHour = 0, startMinute = 0;
+    try {
+        // Find the position of the colon
+        size_t colonPos = startTime.find(':');
+        if (colonPos != string::npos) {
+            // Extract hours and minutes
+            string hourStr = startTime.substr(0, colonPos);
+            string minStr = startTime.substr(colonPos + 1);
+
+            // Convert to integers
+            startHour = stoi(hourStr);
+            startMinute = stoi(minStr);
+
+            // Validate the time
+            if (startHour < 0 || startHour > 24 || startMinute < 0 || startMinute > 59) {
+                cout << "Invalid time values. Hours must be 0-24, minutes 0-59." << endl;
+                return;
+            }
+        } else {
+            cout << "Invalid time format. Use HH:MM format." << endl;
+            return;
+        }
+    } catch (const exception& e) {
+        cout << "Error parsing time: " << e.what() << endl;
+        return;
+    }
+
     show s;
     s.name = move(name);
-    s.category =  move(category);
-    s.startTime =  move(startTime);
+    s.category = move(category);
+    s.startHour = startHour;
+    s.startMinute = startMinute;
     s.duration = duration;
-    s.dayOfWeek =  move(dayOfWeek);
-    s.channelCode =  move(channelCode);
+    s.dayOfWeek = move(dayOfWeek);
+    s.channelCode = move(channelCode);
     programs.push_back(s);
 
     ofstream o("../Program.txt", ios::app);
-    o << endl << s.name << " " << s.category << " " << s.startTime << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode;
+    o << endl << s.name << " " << s.category << " "
+      << (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) << ":"
+      << (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute))
+      << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode;
     o.close();
+
+    cout << "Show added successfully." << endl;
 }
 
 void addChannel(string code, string name, string originCountry) {
@@ -109,7 +152,9 @@ void deleteShow(string name) {
     }
     ofstream o("../Program.txt");
     for (const auto& s : programs) {
-        o << s.name << " " << s.category << " " << s.startTime << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode << endl;
+        string startTimeStr = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                              (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        o << s.name << " " << s.category << " " << startTimeStr << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode << endl;
     }
 }
 
@@ -149,7 +194,8 @@ void editShow(string name, string newName = "", string newCategory = "", string 
         if (newName.empty()) {
             cout << "Name: ";
             getline(cin, newName);
-            if (any_of(programs.begin(), programs.end(), [&newName](const show& s) { return s.name == newName; })) {
+            if (!newName.empty() && any_of(programs.begin(), programs.end(), [&](const show& s) {
+                return s.name == newName && s.name != name; })) {
                 cout << "Show with this name already exists." << endl;
                 return;
             }
@@ -157,12 +203,14 @@ void editShow(string name, string newName = "", string newCategory = "", string 
                 it->name = move(newName);
             }
         } else {
-            if (any_of(programs.begin(), programs.end(), [&newName](const show& s) { return s.name == newName; })) {
+            if (any_of(programs.begin(), programs.end(), [&](const show& s) {
+                return s.name == newName && s.name != name; })) {
                 cout << "Show with this name already exists." << endl;
                 return;
             }
             it->name = move(newName);
         }
+
         if (newCategory.empty()) {
             cout << "Category: ";
             getline(cin, newCategory);
@@ -172,30 +220,61 @@ void editShow(string name, string newName = "", string newCategory = "", string 
         } else {
             it->category = move(newCategory);
         }
+
         if (newStartTime.empty()) {
-            cout << "Start Time: ";
+            cout << "Start Time (HH:MM): ";
             getline(cin, newStartTime);
-            if (!newStartTime.empty()) {
-                it->startTime = move(newStartTime);
-            }
-        } else {
-            it->startTime = move(newStartTime);
         }
+
+        if (!newStartTime.empty()) {
+            try {
+                // Find the position of the colon
+                size_t colonPos = newStartTime.find(':');
+                if (colonPos != string::npos) {
+                    // Extract hours and minutes
+                    string hourStr = newStartTime.substr(0, colonPos);
+                    string minStr = newStartTime.substr(colonPos + 1);
+
+                    // Convert to integers
+                    int hour = stoi(hourStr);
+                    int minute = stoi(minStr);
+
+                    // Validate the time
+                    if (hour >= 0 && hour <= 24 && minute >= 0 && minute <= 59) {
+                        it->startHour = hour;
+                        it->startMinute = minute;
+                    } else {
+                        cout << "Invalid time values. Hours must be 0-24, minutes 0-59." << endl;
+                    }
+                } else {
+                    cout << "Invalid time format. Use HH:MM format." << endl;
+                }
+            } catch (const exception& e) {
+                cout << "Error parsing time: " << e.what() << ". Using original time." << endl;
+            }
+        }
+
         if (!newDuration) {
             cout << "Duration: ";
-            cin >> newDuration;
-            cin.ignore();
-            if (newDuration < 0) {
-                cout << "Invalid duration. Please provide a valid duration." << endl;
-                return;
-            }
+            string durationStr;
+            getline(cin, durationStr);
 
-            if (newDuration != 0) {
-                it->duration = newDuration;
+            if (!durationStr.empty()) {
+                try {
+                    newDuration = stoi(durationStr);
+                    if (newDuration <= 0) {
+                        cout << "Invalid duration. Please provide a positive value." << endl;
+                    } else {
+                        it->duration = newDuration;
+                    }
+                } catch (const exception& e) {
+                    cout << "Error parsing duration: " << e.what() << endl;
+                }
             }
         } else {
             it->duration = newDuration;
         }
+
         if (newDayOfWeek.empty()) {
             cout << "Day of Week: ";
             getline(cin, newDayOfWeek);
@@ -205,19 +284,36 @@ void editShow(string name, string newName = "", string newCategory = "", string 
         } else {
             it->dayOfWeek = move(newDayOfWeek);
         }
+
         if (newChannelCode.empty()) {
             cout << "Channel Code: ";
             getline(cin, newChannelCode);
             if (!newChannelCode.empty()) {
+                // Check if channel code exists
+                bool channelExists = any_of(channels.begin(), channels.end(),
+                                          [&newChannelCode](const channel& c) { return c.code == newChannelCode; });
+                if (!channelExists) {
+                    cout << "Error: Channel code does not exist. Channel not updated." << endl;
+                    return;
+                }
                 it->channelCode = move(newChannelCode);
             }
         } else {
+            // Check if channel code exists
+            bool channelExists = any_of(channels.begin(), channels.end(),
+                                      [&newChannelCode](const channel& c) { return c.code == newChannelCode; });
+            if (!channelExists) {
+                cout << "Error: Channel code does not exist. Channel not updated." << endl;
+                return;
+            }
             it->channelCode = move(newChannelCode);
         }
 
         ofstream o("../Program.txt");
         for (const auto& s : programs) {
-            o << s.name << " " << s.category << " " << s.startTime << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode << endl;
+            string startTimeStr = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                                 (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+            o << s.name << " " << s.category << " " << startTimeStr << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode << endl;
         }
         o.close();
 
@@ -301,7 +397,7 @@ void editChannel(string name, string newCode = "", string newName = "", string n
 
 void showMenu() {
     int choice;
-    string name, category, startTime, dayOfWeek, channelCode, code, originCountry;
+    string name, category, dayOfWeek, channelCode, code, originCountry;
     int duration;
 
     do {
@@ -326,7 +422,8 @@ void showMenu() {
             case 2:
                 allChannels();
                 break;
-            case 3:
+            case 3: {
+                string startTime;
                 cout << "Enter show name: ";
                 getline(cin, name);
                 cout << "Enter category: ";
@@ -340,8 +437,9 @@ void showMenu() {
                 getline(cin, dayOfWeek);
                 cout << "Enter channel code: ";
                 getline(cin, channelCode);
-                addShow(name, category, startTime, duration, dayOfWeek, channelCode);
+                addShow(move(name), move(category), startTime, duration, move(dayOfWeek), move(channelCode));
                 break;
+            }
             case 4:
                 cout << "Enter channel code: ";
                 getline(cin, code);
@@ -386,8 +484,11 @@ int main() {
     string line;
     while (getline( p, line)) {
         show s;
+        string startTime;
         stringstream ss(line);
-        ss >> s.name >> s.category >> s.startTime >> s.duration >> s.dayOfWeek >> s.channelCode;
+        ss >> s.name >> s.category >> startTime >> s.duration >> s.dayOfWeek >> s.channelCode;
+        s.startHour = stoi(startTime.substr(0, 2));
+        s.startMinute = stoi(startTime.substr(3, 2));
         programs.push_back(s);
     }
 
