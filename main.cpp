@@ -435,6 +435,66 @@ void specificDayShow(const string& day) {
     }
 }
 
+void maxShow() {
+    int maxDuration = 0;
+    vector<show> longestShows;
+
+    // First, find the maximum duration
+    for (const auto& s : programs) {
+        if (s.duration > maxDuration) {
+            maxDuration = s.duration;
+        }
+    }
+
+    // Then collect all shows with that duration
+    for (const auto& s : programs) {
+        if (s.duration == maxDuration) {
+            longestShows.push_back(s);
+        }
+    }
+
+    cout << "Shows with the longest duration (" << maxDuration << " minutes):" << endl;
+    for (const auto& show : longestShows) {
+        cout << "\nName: " << show.name << endl;
+        cout << "Category: " << show.category << endl;
+        cout << "Start Time: " << (show.startHour < 10 ? "0" + to_string(show.startHour) : to_string(show.startHour))
+             << ":" << (show.startMinute < 10 ? "0" + to_string(show.startMinute) : to_string(show.startMinute)) << endl;
+        cout << "Duration: " << show.duration << endl;
+        cout << "Day of Week: " << show.dayOfWeek << endl;
+        cout << "Channel Code: " << show.channelCode << endl;
+    }
+}
+
+void minShow() {
+    int minDuration = INT_MAX;
+    vector<show> shortestShows;
+
+    // First, find the minimum duration
+    for (const auto& s : programs) {
+        if (s.duration < minDuration) {
+            minDuration = s.duration;
+        }
+    }
+
+    // Then collect all shows with that duration
+    for (const auto& s : programs) {
+        if (s.duration == minDuration) {
+            shortestShows.push_back(s);
+        }
+    }
+
+    cout << "Shows with the shortest duration (" << minDuration << " minutes):" << endl;
+    for (const auto& show : shortestShows) {
+        cout << "\nName: " << show.name << endl;
+        cout << "Category: " << show.category << endl;
+        cout << "Start Time: " << (show.startHour < 10 ? "0" + to_string(show.startHour) : to_string(show.startHour))
+             << ":" << (show.startMinute < 10 ? "0" + to_string(show.startMinute) : to_string(show.startMinute)) << endl;
+        cout << "Duration: " << show.duration << endl;
+        cout << "Day of Week: " << show.dayOfWeek << endl;
+        cout << "Channel Code: " << show.channelCode << endl;
+    }
+}
+
 void showMenu() {
     int choice;
     string name, category, dayOfWeek, channelCode, code, originCountry;
@@ -451,7 +511,9 @@ void showMenu() {
         cout << "7. Edit show" << endl;
         cout << "8. Edit channel" << endl;
         cout << "9. Show shows on a specific day" << endl;
-        cout << "10. Exit" << endl;
+        cout << "10. Show longest show" << endl;
+        cout << "11. Show shortest show" << endl;
+        cout << "12. Exit" << endl;
         cout << "Enter your choice: ";
         cin >> choice;
         cin.ignore();
@@ -516,13 +578,19 @@ void showMenu() {
                 specificDayShow(dayOfWeek);
                 break;
             case 10:
+                maxShow();
+                break;
+            case 11:
+                minShow();
+                break;
+            case 12:
                 cout << "Exiting program. Goodbye!" << endl;
                 break;
             default:
                 cout << "Invalid choice. Please try again." << endl;
                 break;
         }
-    } while (choice != 10);
+    } while (choice != 12);
 }
 
 int main() {
