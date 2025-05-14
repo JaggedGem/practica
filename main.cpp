@@ -6,6 +6,7 @@
 #include <sstream>
 #include <filesystem>
 #include <algorithm>
+#include <map>
 
 using namespace std;
 
@@ -395,6 +396,32 @@ void editChannel(string name, string newCode = "", string newName = "", string n
     }
 }
 
+void broadcastSummary() {
+    ofstream o("../BroadcastSummary.txt");
+
+    // Map to store channel names and show counts
+    map<string, int> channelCounts;
+
+    // Count shows for each channel
+    for (const auto& show : programs) {
+        // Find the channel name for this show
+        for (const auto& channel : channels) {
+            if (channel.code == show.channelCode) {
+                channelCounts[channel.name]++;
+                break;
+            }
+        }
+    }
+
+    // Write results to file
+    for (const auto& [channelName, count] : channelCounts) {
+        o << channelName << " " << count << endl;
+    }
+
+    o.close();
+    cout << "Broadcast summary has been written to BroadcastSummary.txt" << endl;
+}
+
 void specificDayShow(const string& day) {
     vector<show> sortedShows;
 
@@ -524,11 +551,12 @@ void showMenu() {
         cout << "6. Delete channel" << endl;
         cout << "7. Edit show" << endl;
         cout << "8. Edit channel" << endl;
-        cout << "9. Show shows on a specific day" << endl;
-        cout << "10. Show longest show" << endl;
-        cout << "11. Show shortest show" << endl;
-        cout << "12. Average show" << endl;
-        cout << "13. Exit" << endl;
+        cout << "9. Make a Broadcast Summary" << endl;
+        cout << "10. Show shows on a specific day" << endl;
+        cout << "11. Show longest show" << endl;
+        cout << "12. Show shortest show" << endl;
+        cout << "13. Average show" << endl;
+        cout << "14. Exit" << endl;
         cout << "Enter your choice: ";
         cin >> choice;
         cin.ignore();
@@ -588,27 +616,30 @@ void showMenu() {
                 editChannel(name);
                 break;
             case 9:
+                broadcastSummary();
+                break;
+            case 10:
                 cout << "Enter day of week: ";
                 getline(cin, dayOfWeek);
                 specificDayShow(dayOfWeek);
                 break;
-            case 10:
+            case 11:
                 maxShow();
                 break;
-            case 11:
+            case 12:
                 minShow();
                 break;
-            case 12:
+            case 13:
                 averageShow();
                 break;
-            case 13:
+            case 14:
                 cout << "Exiting program. Goodbye!" << endl;
                 break;
             default:
                 cout << "Invalid choice. Please try again." << endl;
                 break;
         }
-    } while (choice != 13);
+    } while (choice != 14);
 }
 
 int main() {
