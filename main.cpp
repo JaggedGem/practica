@@ -395,6 +395,46 @@ void editChannel(string name, string newCode = "", string newName = "", string n
     }
 }
 
+void specificDayShow(string day) {
+    vector<show> sortedShows;
+
+    // Convert input day to lowercase
+    string dayLower = day;
+    transform(dayLower.begin(), dayLower.end(), dayLower.begin(), ::tolower);
+
+    // Case-insensitive day matching
+    for (auto &s : programs) {
+        string programDayLower = s.dayOfWeek;
+        transform(programDayLower.begin(), programDayLower.end(), programDayLower.begin(), ::tolower);
+
+        if (programDayLower == dayLower) {
+            sortedShows.push_back(s);
+        }
+    }
+
+    if (sortedShows.empty()) {
+        cout << "No shows found for the specified day." << endl;
+        return;
+    }
+
+    cout << endl << "Shows on " << day << ":" << endl;
+    sort(sortedShows.begin(), sortedShows.end(), [](const show& a, const show& b) {
+        if (a.startHour != b.startHour) {
+            return a.startHour < b.startHour;
+        }
+        return a.startMinute < b.startMinute;
+    });
+
+    for (const auto& s : sortedShows) {
+        cout << endl;
+        cout << "Name: " << s.name << endl;
+        cout << "Category: " << s.category << endl;
+        cout << "Start Time: " << (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) << ":" << (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute)) << endl;
+        cout << "Duration: " << s.duration << endl;
+        cout << "Channel Code: " << s.channelCode << endl;
+    }
+}
+
 void showMenu() {
     int choice;
     string name, category, dayOfWeek, channelCode, code, originCountry;
@@ -410,7 +450,8 @@ void showMenu() {
         cout << "6. Delete channel" << endl;
         cout << "7. Edit show" << endl;
         cout << "8. Edit channel" << endl;
-        cout << "9. Exit" << endl;
+        cout << "9. Show shows on a specific day" << endl;
+        cout << "10. Exit" << endl;
         cout << "Enter your choice: ";
         cin >> choice;
         cin.ignore();
@@ -470,13 +511,18 @@ void showMenu() {
                 editChannel(name);
                 break;
             case 9:
+                cout << "Enter day of week: ";
+                getline(cin, dayOfWeek);
+                specificDayShow(dayOfWeek);
+                break;
+            case 10:
                 cout << "Exiting program. Goodbye!" << endl;
                 break;
             default:
                 cout << "Invalid choice. Please try again." << endl;
                 break;
         }
-    } while (choice != 9);
+    } while (choice != 10);
 }
 
 int main() {
