@@ -395,7 +395,7 @@ void editChannel(string name, string newCode = "", string newName = "", string n
     }
 }
 
-void specificDayShow(string day) {
+void specificDayShow(const string& day) {
     vector<show> sortedShows;
 
     // Convert input day to lowercase
