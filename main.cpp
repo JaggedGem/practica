@@ -30,7 +30,25 @@ struct channel {
 vector<show> programs;
 vector<channel> channels;
 
+bool fileExists(const string& fileName) {
+    ifstream file(fileName);
+    return file.good();
+}
+
+void createFileIfNotExists(const string& fileName) {
+    if (!fileExists(fileName)) {
+        ofstream file(fileName);
+        file.close();
+        cout << "Created new file: " << fileName << endl;
+    }
+}
+
 void allShows() {
+    if (programs.empty()) {
+        cout << "No shows available." << endl;
+        return;
+    }
+
     // First pass: determine needed column widths based on content
     int nameWidth = 4;      // minimum width for "Name"
     int categoryWidth = 8;  // minimum width for "Category"
@@ -77,6 +95,11 @@ void allShows() {
 }
 
 void allChannels() {
+    if (channels.empty()) {
+        cout << "No channels available." << endl;
+        return;
+    }
+
     // First pass: determine needed column widths based on content
     int codeWidth = 4;      // minimum width for "Code"
     int nameWidth = 4;      // minimum width for "Name"
@@ -165,7 +188,11 @@ void addShow(string name, string category, string startTime, int duration, strin
     s.channelCode = move(channelCode);
     programs.push_back(s);
 
-    ofstream o("../Program.txt", ios::app);
+    if (!fileExists("Program.txt")) {
+        createFileIfNotExists("Program.txt");
+    }
+
+    ofstream o("Program.txt", ios::app);
     o << endl << s.name << " " << s.category << " "
       << (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) << ":"
       << (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute))
@@ -192,7 +219,11 @@ void addChannel(string code, string name, string originCountry) {
     c.originCountry = move(originCountry);
     channels.push_back(c);
 
-    ofstream o("../Channel.txt", ios::app);
+    if (!fileExists("Channel.txt")) {
+        createFileIfNotExists("Channel.txt");
+    }
+
+    ofstream o("Channel.txt", ios::app);
     o << endl << c.code << " " << c.name << " " << c.originCountry;
     o.close();
 }
@@ -209,7 +240,11 @@ void deleteShow(string name) {
     } else {
         cout << "Show not found." << endl;
     }
-    ofstream o("../Program.txt");
+    if (!fileExists("Program.txt")) {
+        cout << "File not found. Cannot update." << endl;
+        return;
+    }
+    ofstream o("Program.txt");
     for (const auto& s : programs) {
         string startTimeStr = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
                               (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
@@ -229,7 +264,11 @@ void deleteChannel(string name) {
     } else {
         cout << "Channel not found." << endl;
     }
-    ofstream o("../Channel.txt");
+    if (!fileExists("Channel.txt")) {
+        cout << "File not found. Cannot update." << endl;
+        return;
+    }
+    ofstream o("Channel.txt");
     for (const auto& c : channels) {
         o << c.code << " " << c.name << " " << c.originCountry << endl;
     }
@@ -368,7 +407,11 @@ void editShow(string name, string newName = "", string newCategory = "", string 
             it->channelCode = move(newChannelCode);
         }
 
-        ofstream o("../Program.txt");
+        if (!fileExists("Program.txt")) {
+            cout << "File not found. Cannot update." << endl;
+            return;
+        }
+        ofstream o("Program.txt");
         for (const auto& s : programs) {
             string startTimeStr = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
                                  (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
@@ -442,7 +485,11 @@ void editChannel(string name, string newCode = "", string newName = "", string n
             it->originCountry = move(newOriginCountry);
         }
 
-        ofstream o("../Channel.txt");
+        if (!fileExists("Channel.txt")) {
+            cout << "File not found. Cannot update." << endl;
+            return;
+        }
+        ofstream o("Channel.txt");
         for (const auto& c : channels) {
             o << c.code << " " << c.name << " " << c.originCountry << endl;
         }
@@ -455,7 +502,15 @@ void editChannel(string name, string newCode = "", string newName = "", string n
 }
 
 void broadcastSummary() {
-    ofstream o("../BroadcastSummary.txt");
+    if (channels.empty() || programs.empty()) {
+        cout << "No channels or shows available." << endl;
+        return;
+    }
+
+    if (!fileExists("BroadcastSummary.txt")) {
+        createFileIfNotExists("BroadcastSummary.txt");
+    }
+    ofstream o("BroadcastSummary.txt");
 
     // Map to store channel names and show counts
     map<string, int> channelCounts;
@@ -701,7 +756,10 @@ void showMenu() {
 }
 
 int main() {
-    ifstream  p("../Program.txt");
+    if (!fileExists("Program.txt")) {
+        createFileIfNotExists("Program.txt");
+    }
+    ifstream p("Program.txt");
     string line;
     while (getline( p, line)) {
         show s;
@@ -713,7 +771,10 @@ int main() {
         programs.push_back(s);
     }
 
-    ifstream ch("../Channel.txt");
+    if (!fileExists("Channel.txt")) {
+        createFileIfNotExists("Channel.txt");
+    }
+    ifstream ch("Channel.txt");
     while (getline(ch, line)) {
         channel c;
         stringstream ss(line);
