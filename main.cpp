@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <map>
+#include <iomanip>
 
 using namespace std;
 
@@ -30,24 +31,81 @@ vector<show> programs;
 vector<channel> channels;
 
 void allShows() {
-    for (auto &s : programs) {
-        cout << "Name: " << s.name << endl;
-        cout << "Category: " << s.category << endl;
-        cout << "Start Time: " << (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) << ":" << (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute)) << endl;
-        cout << "Duration: " << s.duration << endl;
-        cout << "Day of Week: " << s.dayOfWeek << endl;
-        cout << "Channel Code: " << s.channelCode << endl;
-        cout << endl;
+    // First pass: determine needed column widths based on content
+    int nameWidth = 4;      // minimum width for "Name"
+    int categoryWidth = 8;  // minimum width for "Category"
+    int timeWidth = 10;     // minimum width for "Start Time"
+    int durationWidth = 8;  // minimum width for "Duration"
+    int dayWidth = 3;       // minimum width for "Day"
+    int channelWidth = 12;  // minimum width for "Channel Code"
+
+    // Determine maximum content width for each column
+    for (const auto& s : programs) {
+        nameWidth = max(nameWidth, (int)s.name.length() + 1);
+        categoryWidth = max(categoryWidth, (int)s.category.length() + 1);
+        dayWidth = max(dayWidth, (int)s.dayOfWeek.length() + 1);
+        channelWidth = max(channelWidth, (int)s.channelCode.length() + 1);
     }
+
+    // Print header
+    int totalWidth = nameWidth + categoryWidth + timeWidth + durationWidth + dayWidth + channelWidth + 7; // +7 for separators
+    cout << string(totalWidth, '-');
+    cout << "| " << left << setw(nameWidth) << "Name"
+         << "| " << setw(categoryWidth) << "Category"
+         << "| " << setw(timeWidth) << "Start Time"
+         << "| " << setw(durationWidth) << "Duration"
+         << "| " << setw(dayWidth) << "Day"
+         << "| " << setw(channelWidth) << "Channel Code" << " |" << endl;
+    cout << string(totalWidth, '-') << endl;
+
+    // Print data rows
+    for (const auto& s : programs) {
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                          (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        string duration = to_string(s.duration) + " min";
+
+        cout << "| " << setw(nameWidth) << s.name
+             << "| " << setw(categoryWidth) << s.category
+             << "| " << setw(timeWidth) << startTime
+             << "| " << setw(durationWidth) << duration
+             << "| " << setw(dayWidth) << s.dayOfWeek
+             << "| " << setw(channelWidth) << s.channelCode << " |" << endl;
+    }
+
+    cout << string(totalWidth, '-') << endl;
+    cout << programs.size() << " shows found." << endl;
 }
 
 void allChannels() {
-    for (auto &c : channels) {
-        cout << "Code: " << c.code << endl;
-        cout << "Name: " << c.name << endl;
-        cout << "Country of Origin: " << c.originCountry << endl;
-        cout << endl;
+    // First pass: determine needed column widths based on content
+    int codeWidth = 4;      // minimum width for "Code"
+    int nameWidth = 4;      // minimum width for "Name"
+    int countryWidth = 7;   // minimum width for "Country"
+
+    // Determine maximum content width for each column
+    for (const auto& c : channels) {
+        codeWidth = max(codeWidth, (int)c.code.length() + 1);
+        nameWidth = max(nameWidth, (int)c.name.length() + 1);
+        countryWidth = max(countryWidth, (int)c.originCountry.length() + 1);
     }
+
+    // Print header
+    int totalWidth = codeWidth + nameWidth + countryWidth + 4; // +4 for separators
+    cout << string(totalWidth, '-') << endl;
+    cout << "| " << left << setw(codeWidth) << "Code"
+         << "| " << setw(nameWidth) << "Name"
+         << "| " << setw(countryWidth) << "Country of Origin" << " |" << endl;
+    cout << string(totalWidth, '-') << endl;
+
+    // Print data rows
+    for (const auto& c : channels) {
+        cout << "| " << setw(codeWidth) << c.code
+             << "| " << setw(nameWidth) << c.name
+             << "| " << setw(countryWidth) << c.originCountry << " |" << endl;
+    }
+
+    cout << string(totalWidth, '-') << endl;
+    cout << channels.size() << " channels found." << endl;
 }
 
 void addShow(string name, string category, string startTime, int duration, string dayOfWeek, string channelCode) {
