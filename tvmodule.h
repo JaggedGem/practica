@@ -35,8 +35,8 @@ void allShows();
 void allChannels();
 
 // CRUD operations
-void addShow(string name, string category, const string& startTime, int duration, string dayOfWeek, string channelCode);
-void addChannel(string name, string originCountry);
+void addShow(const string& name, const string& category, const string& startTime, int duration, const string& dayOfWeek, string channelCode);
+void addChannel(const string& name, const string& originCountry);
 void deleteShow(const string& name);
 void deleteChannel(const string& name);
 void editShow(const string& name, string newName = "", string newCategory = "", string newStartTime = "", int newDuration = 0, string newDayOfWeek = "", string newChannelCode = "");

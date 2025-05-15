@@ -1,7 +1,6 @@
 #include "tvmodule.h"
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <algorithm>
 #include <map>
 #include <iomanip>
@@ -41,7 +40,7 @@ void createFileIfNotExists(const string& fileName) {
 string generateNextChannelId() {
     int maxId = 0;
     
-    // Find highest existing ID
+    // Find the highest existing ID
     for (const auto& c : channels) {
         try {
             int currentId = stoi(c.code);
@@ -73,19 +72,19 @@ void allShows() {
 
     // Determine maximum content width for each column
     for (const auto& s : programs) {
-        nameWidth = max(nameWidth, (int)decode(s.name).length());
-        categoryWidth = max(categoryWidth, (int)decode(s.category).length());
-        dayWidth = max(dayWidth, (int)decode(s.dayOfWeek).length());
-        channelWidth = max(channelWidth, (int)s.channelCode.length());
+        nameWidth = max(nameWidth, static_cast<int>(decode(s.name).length()));
+        categoryWidth = max(categoryWidth, static_cast<int>(decode(s.category).length()));
+        dayWidth = max(dayWidth, static_cast<int>(decode(s.dayOfWeek).length()));
+        channelWidth = max(channelWidth, static_cast<int>(s.channelCode.length()));
 
         // Calculate duration string length and consider it for column width
         string durationStr = to_string(s.duration) + " min";
-        durationWidth = max(durationWidth, (int)durationStr.length());
+        durationWidth = max(durationWidth, static_cast<int>(durationStr.length()));
 
         // Calculate time string length
         string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
                           (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
-        timeWidth = max(timeWidth, (int)startTime.length());
+        timeWidth = max(timeWidth, static_cast<int>(startTime.length()));
     }
 
     // Add padding (1 space on each side)
@@ -143,9 +142,9 @@ void allChannels() {
 
     // Determine maximum content width for each column
     for (const auto& c : channels) {
-        codeWidth = max(codeWidth, (int)c.code.length() + 1);
-        nameWidth = max(nameWidth, (int)c.name.length() + 1);
-        countryWidth = max(countryWidth, (int)c.originCountry.length() + 1);
+        codeWidth = max(codeWidth, static_cast<int>(c.code.length()) + 1);
+        nameWidth = max(nameWidth, static_cast<int>(c.name.length()) + 1);
+        countryWidth = max(countryWidth, static_cast<int>(c.originCountry.length()) + 1);
     }
 
     // Print header
@@ -167,7 +166,7 @@ void allChannels() {
     cout << channels.size() << " channels found." << endl;
 }
 
-void addShow(string name, string category, const string& startTime, int duration, string dayOfWeek, string channelCode) {
+void addShow(const string& name, const string& category, const string& startTime, int duration, const string& dayOfWeek, string channelCode) {
     if (name.empty() || category.empty() || startTime.empty() || duration <= 0 || dayOfWeek.empty() || channelCode.empty()) {
         cout << "Invalid input. Please provide valid show details." << endl;
         return;
@@ -177,13 +176,12 @@ void addShow(string name, string category, const string& startTime, int duration
     string encCategory = encode(category);
     string encDay = encode(dayOfWeek);
 
-    if (any_of(programs.begin(), programs.end(), [&encName](const show& s) { return s.name == encName; })) {
+    if (ranges::any_of(programs, [&encName](const show& s) { return s.name == encName; })) {
         cout << "Show with this name already exists." << endl;
         return;
     }
 
-    bool channelExists = any_of(channels.begin(), channels.end(),
-                                [&channelCode](const channel& c) { return c.code == channelCode; });
+    bool channelExists = ranges::any_of(channels, [&channelCode](const channel& c) { return c.code == channelCode; });
     if (!channelExists) {
         cout << "Error: Channel code does not exist. Please enter a valid channel code." << endl;
         return;
@@ -217,7 +215,7 @@ void addShow(string name, string category, const string& startTime, int duration
     cout << "Show added successfully." << endl;
 }
 
-void addChannel(string name, string originCountry) {
+void addChannel(const string& name, const string& originCountry) {
     if (name.empty() || originCountry.empty()) {
         cout << "Invalid input. Please provide valid channel details." << endl;
         return;
@@ -226,7 +224,7 @@ void addChannel(string name, string originCountry) {
     string encName = encode(name);
     string encCountry = encode(originCountry);
 
-    if (any_of(channels.begin(), channels.end(), [&encName](const channel& c) { return c.name == encName; })) {
+    if (ranges::any_of(channels, [&encName](const channel& c) { return c.name == encName; })) {
         cout << "Channel with this name already exists." << endl;
         return;
     }
@@ -254,7 +252,7 @@ void deleteShow(const string& name) {
     }
 
     string encName = encode(name);
-    auto it = remove_if(programs.begin(), programs.end(), [&encName](const show& s) { return s.name == encName; });
+    auto it = ranges::remove_if(programs, [&encName](const show& s) { return s.name == encName; }).begin();
     if (it != programs.end()) {
         programs.erase(it, programs.end());
         cout << "Show deleted successfully." << endl;
@@ -280,7 +278,7 @@ void deleteChannel(const string& name) {
     }
 
     string encName = encode(name);
-    auto it = remove_if(channels.begin(), channels.end(), [&encName](const channel& c) { return c.name == encName; });
+    auto it = ranges::remove_if(channels, [&encName](const channel& c) { return c.name == encName; }).begin();
     if (it != channels.end()) {
         channels.erase(it, channels.end());
         cout << "Channel deleted successfully." << endl;
@@ -304,7 +302,7 @@ void editShow(const string& name, string newName, string newCategory, string new
     }
     string encName = encode(name);
 
-    auto it = find_if(programs.begin(), programs.end(), [&encName](const show& s) { return s.name == encName; });
+    auto it = ranges::find_if(programs, [&encName](const show& s) { return s.name == encName; });
     if (it != programs.end()) {
         cout << "Editing show: " << decode(it->name) << endl;
 
@@ -317,7 +315,7 @@ void editShow(const string& name, string newName, string newCategory, string new
             cout << "Name: ";
             getline(cin, newName);
             newName = encode(newName);
-            if (!newName.empty() && any_of(programs.begin(), programs.end(), [&](const show& s) {
+            if (!newName.empty() && ranges::any_of(programs, [&](const show& s) {
                 return s.name == newName && s.name != name; })) {
                 cout << "Show with this name already exists." << endl;
                 return;
@@ -327,7 +325,7 @@ void editShow(const string& name, string newName, string newCategory, string new
             }
         } else {
             newName = encode(newName);
-            if (any_of(programs.begin(), programs.end(), [&](const show& s) {
+            if (ranges::any_of(programs, [&](const show& s) {
                 return s.name == newName && s.name != name; })) {
                 cout << "Show with this name already exists." << endl;
                 return;
@@ -416,8 +414,8 @@ void editShow(const string& name, string newName, string newCategory, string new
             getline(cin, newChannelCode);
             if (!newChannelCode.empty()) {
                 // Check if channel code exists
-                bool channelExists = any_of(channels.begin(), channels.end(),
-                                          [&newChannelCode](const channel& c) { return c.code == newChannelCode; });
+                bool channelExists = ranges::any_of(channels,
+                                                    [&newChannelCode](const channel& c) { return c.code == newChannelCode; });
                 if (!channelExists) {
                     cout << "Error: Channel code does not exist. Channel not updated." << endl;
                     return;
@@ -426,8 +424,8 @@ void editShow(const string& name, string newName, string newCategory, string new
             }
         } else {
             // Check if channel code exists
-            bool channelExists = any_of(channels.begin(), channels.end(),
-                                      [&newChannelCode](const channel& c) { return c.code == newChannelCode; });
+            bool channelExists = ranges::any_of(channels,
+                                                [&newChannelCode](const channel& c) { return c.code == newChannelCode; });
             if (!channelExists) {
                 cout << "Error: Channel code does not exist. Channel not updated." << endl;
                 return;
@@ -460,7 +458,7 @@ void editChannel(const string& name, string newName, string newOriginCountry) {
     }
 
     string encName = encode(name);
-    auto it = find_if(channels.begin(), channels.end(), [&encName](const channel& c) { return c.name == encName; });
+    auto it = ranges::find_if(channels, [&encName](const channel& c) { return c.name == encName; });
     if (it != channels.end()) {
         cout << "Editing channel: " << decode(it->name) << endl;
 
@@ -472,7 +470,7 @@ void editChannel(const string& name, string newName, string newOriginCountry) {
             cout << "Name: ";
             getline(cin, newName);
             newName = encode(newName);  // Fix: encode newName, not name
-            if (any_of(channels.begin(), channels.end(), [&](const channel& c) {
+            if (ranges::any_of(channels.begin(), channels.end(), [&](const channel& c) {
                 return c.name == newName && c.name != it->name; })) {
                 cout << "Channel with this name already exists." << endl;
                 return;
@@ -482,7 +480,7 @@ void editChannel(const string& name, string newName, string newOriginCountry) {
             }
         } else {
             newName = encode(newName);
-            if (any_of(channels.begin(), channels.end(), [&newName, &it](const channel& c) { 
+            if (ranges::any_of(channels, [&newName, &it](const channel& c) { 
                 return c.name == newName && c.name != it->name; })) {
                 cout << "Channel with this name already exists." << endl;
                 return;
@@ -557,12 +555,12 @@ void specificDayShow(const string& day) {
 
     // Convert input day to lowercase
     string dayLower = day;
-    transform(dayLower.begin(), dayLower.end(), dayLower.begin(), ::tolower);
+    ranges::transform(dayLower, dayLower.begin(), ::tolower);
 
     // Case-insensitive day matching
     for (auto &s : programs) {
         string programDayLower = s.dayOfWeek;
-        transform(programDayLower.begin(), programDayLower.end(), programDayLower.begin(), ::tolower);
+        ranges::transform(programDayLower, programDayLower.begin(), ::tolower);
 
         if (programDayLower == dayLower) {
             sortedShows.push_back(s);
@@ -575,7 +573,7 @@ void specificDayShow(const string& day) {
     }
 
     // Sort shows by start time
-    sort(sortedShows.begin(), sortedShows.end(), [](const show& a, const show& b) {
+    ranges::sort(sortedShows, [](const show& a, const show& b) {
         if (a.startHour != b.startHour) {
             return a.startHour < b.startHour;
         }
@@ -591,18 +589,18 @@ void specificDayShow(const string& day) {
 
     // Determine maximum content width for each column
     for (const auto& s : sortedShows) {
-        nameWidth = max(nameWidth, (int)decode(s.name).length());
-        categoryWidth = max(categoryWidth, (int)decode(s.category).length());
-        channelWidth = max(channelWidth, (int)s.channelCode.length());
+        nameWidth = max(nameWidth, static_cast<int>(decode(s.name).length()));
+        categoryWidth = max(categoryWidth, static_cast<int>(decode(s.category).length()));
+        channelWidth = max(channelWidth, static_cast<int>(s.channelCode.length()));
 
         // Calculate duration string length and consider it for column width
         string durationStr = to_string(s.duration) + " min";
-        durationWidth = max(durationWidth, (int)durationStr.length());
+        durationWidth = max(durationWidth, static_cast<int>(durationStr.length()));
 
         // Calculate time string length
         string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
                           (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
-        timeWidth = max(timeWidth, (int)startTime.length());
+        timeWidth = max(timeWidth, static_cast<int>(startTime.length()));
     }
 
     // Add padding (1 space on each side)
@@ -676,19 +674,19 @@ void maxShow() {
 
     // Determine maximum content width for each column
     for (const auto& s : longestShows) {
-        nameWidth = max(nameWidth, (int)decode(s.name).length());
-        categoryWidth = max(categoryWidth, (int)decode(s.category).length());
-        dayWidth = max(dayWidth, (int)decode(s.dayOfWeek).length());
-        channelWidth = max(channelWidth, (int)s.channelCode.length());
+        nameWidth = max(nameWidth, static_cast<int>(decode(s.name).length()));
+        categoryWidth = max(categoryWidth, static_cast<int>(decode(s.category).length()));
+        dayWidth = max(dayWidth, static_cast<int>(decode(s.dayOfWeek).length()));
+        channelWidth = max(channelWidth, static_cast<int>(s.channelCode.length()));
 
         // Calculate duration string length and consider it for column width
         string durationStr = to_string(s.duration) + " min";
-        durationWidth = max(durationWidth, (int)durationStr.length());
+        durationWidth = max(durationWidth, static_cast<int>(durationStr.length()));
 
         // Calculate time string length
         string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
                           (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
-        timeWidth = max(timeWidth, (int)startTime.length());
+        timeWidth = max(timeWidth, static_cast<int>(startTime.length()));
     }
 
     // Add padding (1 space on each side)
@@ -766,19 +764,19 @@ void minShow() {
 
     // Determine maximum content width for each column
     for (const auto& s : shortestShows) {
-        nameWidth = max(nameWidth, (int)decode(s.name).length());
-        categoryWidth = max(categoryWidth, (int)decode(s.category).length());
-        dayWidth = max(dayWidth, (int)decode(s.dayOfWeek).length());
-        channelWidth = max(channelWidth, (int)s.channelCode.length());
+        nameWidth = max(nameWidth, static_cast<int>(decode(s.name).length()));
+        categoryWidth = max(categoryWidth, static_cast<int>(decode(s.category).length()));
+        dayWidth = max(dayWidth, static_cast<int>(decode(s.dayOfWeek).length()));
+        channelWidth = max(channelWidth, static_cast<int>(s.channelCode.length()));
 
         // Calculate duration string length and consider it for column width
         string durationStr = to_string(s.duration) + " min";
-        durationWidth = max(durationWidth, (int)durationStr.length());
+        durationWidth = max(durationWidth, static_cast<int>(durationStr.length()));
 
         // Calculate time string length
         string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
                           (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
-        timeWidth = max(timeWidth, (int)startTime.length());
+        timeWidth = max(timeWidth, static_cast<int>(startTime.length()));
     }
 
     // Add padding (1 space on each side)
@@ -838,7 +836,7 @@ void averageShow() {
 }
 
 void showMenu() {
-    int choice;
+    int choice = 0;
     string name, category, dayOfWeek, channelCode, originCountry;
     int duration;
 
@@ -898,7 +896,7 @@ void showMenu() {
                 getline(cin, dayOfWeek);
                 cout << "Enter channel code: ";
                 getline(cin, channelCode);
-                addShow(move(name), move(category), startTime, duration, move(dayOfWeek), move(channelCode));
+                addShow(name, category, startTime, duration, dayOfWeek, move(channelCode));
                 break;
             }
             case 4:
