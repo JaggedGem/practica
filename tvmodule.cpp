@@ -12,6 +12,15 @@ using namespace std;
 vector<show> programs;
 vector<channel> channels;
 
+// Function to clear the screen (cross-platform)
+void clearScreen() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
 static string encode(const string& s) {
     string r;
     for (char c : s) r += (c == ' ' ? '_' : c);
@@ -866,17 +875,23 @@ void showMenu() {
             choice = stoi(input);
         } catch (const exception&) {
             cout << "Invalid input. Please enter a number." << endl;
+            cout << "\nPress Enter to continue...";
+            cin.get();
+            clearScreen();
             continue; // Skip the rest of the loop iteration
         }
 
         switch (choice) {
             case 1:
+                clearScreen();
                 allShows();
                 break;
             case 2:
+                clearScreen();
                 allChannels();
                 break;
             case 3: {
+                clearScreen();
                 string startTime;
                 cout << "Enter show name: ";
                 getline(cin, name);
@@ -890,6 +905,9 @@ void showMenu() {
                     duration = stoi(input);
                 } catch (const exception&) {
                     cout << "Invalid duration. Operation cancelled." << endl;
+                    cout << "\nPress Enter to continue...";
+                    cin.get();
+                    clearScreen();
                     continue;
                 }
                 cout << "Enter day of week: ";
@@ -900,6 +918,7 @@ void showMenu() {
                 break;
             }
             case 4:
+                clearScreen();
                 cout << "Enter channel name: ";
                 getline(cin, name);
                 cout << "Enter origin country: ";
@@ -907,48 +926,64 @@ void showMenu() {
                 addChannel(name, originCountry);
                 break;
             case 5:
+                clearScreen();
                 cout << "Enter name of show to delete: ";
                 getline(cin, name);
                 deleteShow(name);
                 break;
             case 6:
+                clearScreen();
                 cout << "Enter name of channel to delete: ";
                 getline(cin, name);
                 deleteChannel(name);
                 break;
             case 7:
+                clearScreen();
                 cout << "Enter name of show to edit: ";
                 getline(cin, name);
                 editShow(name);
                 break;
             case 8:
+                clearScreen();
                 cout << "Enter name of channel to edit: ";
                 getline(cin, name);
                 editChannel(name);
                 break;
             case 9:
+                clearScreen();
                 broadcastSummary();
                 break;
             case 10:
+                clearScreen();
                 cout << "Enter day of week: ";
                 getline(cin, dayOfWeek);
                 specificDayShow(dayOfWeek);
                 break;
             case 11:
+                clearScreen();
                 maxShow();
                 break;
             case 12:
+                clearScreen();
                 minShow();
                 break;
             case 13:
+                clearScreen();
                 averageShow();
                 break;
             case 14:
+                clearScreen();
                 cout << "Exiting program. Goodbye!" << endl;
                 break;
             default:
                 cout << "Invalid choice. Please try again." << endl;
                 break;
+        }
+        
+        if (choice != 14) {
+            cout << "\nPress Enter to continue...";
+            cin.get();
+            clearScreen();
         }
     } while (choice != 14);
 }

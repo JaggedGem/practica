@@ -34,6 +34,9 @@ int main() {
     }
     cFile.close();
 
+    // Clear screen before starting the program
+    clearScreen();
+    
     // Start interface
     showMenu();
     return 0;

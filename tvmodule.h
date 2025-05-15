@@ -26,6 +26,9 @@ struct channel {
 extern vector<show> programs;
 extern vector<channel> channels;
 
+// Screen utility
+void clearScreen();
+
 // File utilities
 bool fileExists(const string& fileName);
 void createFileIfNotExists(const string& fileName);
