@@ -54,22 +54,39 @@ void allShows() {
 
     // Determine maximum content width for each column
     for (const auto& s : programs) {
-        nameWidth = max(nameWidth, (int)s.name.length() + 1);
-        categoryWidth = max(categoryWidth, (int)s.category.length() + 1);
-        dayWidth = max(dayWidth, (int)s.dayOfWeek.length() + 1);
-        channelWidth = max(channelWidth, (int)s.channelCode.length() + 1);
+        nameWidth = max(nameWidth, (int)decode(s.name).length());
+        categoryWidth = max(categoryWidth, (int)decode(s.category).length());
+        dayWidth = max(dayWidth, (int)decode(s.dayOfWeek).length());
+        channelWidth = max(channelWidth, (int)s.channelCode.length());
+
+        // Calculate duration string length and consider it for column width
+        string durationStr = to_string(s.duration) + " min";
+        durationWidth = max(durationWidth, (int)durationStr.length());
+
+        // Calculate time string length
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                          (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        timeWidth = max(timeWidth, (int)startTime.length());
     }
 
+    // Add padding (1 space on each side)
+    nameWidth += 2;
+    categoryWidth += 2;
+    timeWidth += 2;
+    durationWidth += 2;
+    dayWidth += 2;
+    channelWidth += 2;
+
     // Print header
-    int totalWidth = nameWidth + categoryWidth + timeWidth + durationWidth + dayWidth + channelWidth + (6 * 3);
+    int totalWidth = nameWidth + categoryWidth + timeWidth + durationWidth + dayWidth + channelWidth + 7; // 7 for the separators
 
     cout << endl << string(totalWidth, '-') << endl;
-    cout << "| " << left << setw(nameWidth) << "Name"
-         << " | " << setw(categoryWidth) << "Category"
-         << " | " << setw(timeWidth) << "Start Time"
-         << " | " << setw(durationWidth) << "Duration"
-         << " | " << setw(dayWidth) << "Day"
-         << " | " << setw(channelWidth) << "Channel Code" << " |" << endl;
+    cout << "|" << setw(nameWidth) << left << " Name"
+         << "|" << setw(categoryWidth) << " Category"
+         << "|" << setw(timeWidth) << " Start Time"
+         << "|" << setw(durationWidth) << " Duration"
+         << "|" << setw(dayWidth) << " Day"
+         << "|" << setw(channelWidth) << " Channel Code" << "|" << endl;
     cout << string(totalWidth, '-') << endl;
 
     // Print data rows
@@ -78,16 +95,16 @@ void allShows() {
         string category = decode(s.category);
         string day = decode(s.dayOfWeek);
         string channelCode = s.channelCode;
-        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":"
-                         + (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
-        string duration = to_string(s.duration) + " min";
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                         (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        string durationStr = to_string(s.duration) + " min";
 
-        cout << "| " << setw(nameWidth) << name
-             << " | " << setw(categoryWidth) << category
-             << " | " << setw(timeWidth) << startTime
-             << " | " << setw(durationWidth) << duration
-             << " | " << setw(dayWidth) << day
-             << " | " << setw(channelWidth) << channelCode << " |" << endl;
+        cout << "|" << setw(nameWidth) << " " + name
+             << "|" << setw(categoryWidth) << " " + category
+             << "|" << setw(timeWidth) << " " + startTime
+             << "|" << setw(durationWidth) << " " + durationStr
+             << "|" << setw(dayWidth) << " " + day
+             << "|" << setw(channelWidth) << " " + channelCode << "|" << endl;
     }
 
     cout << string(totalWidth, '-') << endl;
@@ -263,10 +280,11 @@ void editShow(const string& name, string newName, string newCategory, string new
         cout << "Invalid input. Please provide valid show details." << endl;
         return;
     }
+    string encName = encode(name);
 
-    auto it = find_if(programs.begin(), programs.end(), [&name](const show& s) { return s.name == name; });
+    auto it = find_if(programs.begin(), programs.end(), [&encName](const show& s) { return s.name == encName; });
     if (it != programs.end()) {
-        cout << "Editing show: " << it->name << endl;
+        cout << "Editing show: " << decode(it->name) << endl;
 
         if (newName.empty() || newCategory.empty() || newStartTime.empty() ||
             newDuration == 0 || newDayOfWeek.empty() || newChannelCode.empty()) {
@@ -276,6 +294,7 @@ void editShow(const string& name, string newName, string newCategory, string new
         if (newName.empty()) {
             cout << "Name: ";
             getline(cin, newName);
+            newName = encode(newName);
             if (!newName.empty() && any_of(programs.begin(), programs.end(), [&](const show& s) {
                 return s.name == newName && s.name != name; })) {
                 cout << "Show with this name already exists." << endl;
@@ -285,6 +304,7 @@ void editShow(const string& name, string newName, string newCategory, string new
                 it->name = move(newName);
             }
         } else {
+            newName = encode(newName);
             if (any_of(programs.begin(), programs.end(), [&](const show& s) {
                 return s.name == newName && s.name != name; })) {
                 cout << "Show with this name already exists." << endl;
@@ -296,10 +316,12 @@ void editShow(const string& name, string newName, string newCategory, string new
         if (newCategory.empty()) {
             cout << "Category: ";
             getline(cin, newCategory);
+            newCategory = encode(newCategory);
             if (!newCategory.empty()) {
                 it->category = move(newCategory);
             }
         } else {
+            newCategory = encode(newCategory);
             it->category = move(newCategory);
         }
 
@@ -415,9 +437,10 @@ void editChannel(const string& name, string newCode, string newName, string newO
         return;
     }
 
-    auto it = find_if(channels.begin(), channels.end(), [&name](const channel& c) { return c.name == name; });
+    string encName = encode(name);
+    auto it = find_if(channels.begin(), channels.end(), [&encName](const channel& c) { return c.name == encName; });
     if (it != channels.end()) {
-        cout << "Editing channel: " << it->name << endl;
+        cout << "Editing channel: " << decode(it->name) << endl;
 
         if (newCode.empty() || newName.empty() || newOriginCountry.empty()) {
             cout << "Enter new details (leave blank to keep current value):" << endl;
@@ -444,6 +467,7 @@ void editChannel(const string& name, string newCode, string newName, string newO
         if (newName.empty()) {
             cout << "Name: ";
             getline(cin, newName);
+            newName = encode(name);
             if (any_of(channels.begin(), channels.end(), [&newName](const channel& c) { return c.name == newName; })) {
                 cout << "Channel with this name already exists." << endl;
                 return;
@@ -452,6 +476,7 @@ void editChannel(const string& name, string newCode, string newName, string newO
                 it->name = move(newName);
             }
         } else {
+            newName = encode(newName);
             if (any_of(channels.begin(), channels.end(), [&newName](const channel& c) { return c.name == newName; })) {
                 cout << "Channel with this name already exists." << endl;
                 return;
@@ -463,9 +488,11 @@ void editChannel(const string& name, string newCode, string newName, string newO
             cout << "Origin Country: ";
             getline(cin, newOriginCountry);
             if (!newOriginCountry.empty()) {
+                newOriginCountry = encode(newOriginCountry);
                 it->originCountry = move(newOriginCountry);
             }
         } else {
+            newOriginCountry = encode(newOriginCountry);
             it->originCountry = move(newOriginCountry);
         }
 
@@ -551,8 +578,8 @@ void specificDayShow(const string& day) {
 
     for (const auto& s : sortedShows) {
         cout << endl;
-        cout << "Name: " << s.name << endl;
-        cout << "Category: " << s.category << endl;
+        cout << "Name: " << decode(s.name) << endl;
+        cout << "Category: " << decode(s.category) << endl;
         cout << "Start Time: " << (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) << ":" << (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute)) << endl;
         cout << "Duration: " << s.duration << endl;
         cout << "Channel Code: " << s.channelCode << endl;
@@ -579,8 +606,8 @@ void maxShow() {
 
     cout << "Shows with the longest duration (" << maxDuration << " minutes):" << endl;
     for (const auto& show : longestShows) {
-        cout << "\nName: " << show.name << endl;
-        cout << "Category: " << show.category << endl;
+        cout << "\nName: " << decode(show.name) << endl;
+        cout << "Category: " << decode(show.category) << endl;
         cout << "Start Time: " << (show.startHour < 10 ? "0" + to_string(show.startHour) : to_string(show.startHour))
              << ":" << (show.startMinute < 10 ? "0" + to_string(show.startMinute) : to_string(show.startMinute)) << endl;
         cout << "Duration: " << show.duration << endl;
@@ -609,8 +636,8 @@ void minShow() {
 
     cout << "Shows with the shortest duration (" << minDuration << " minutes):" << endl;
     for (const auto& show : shortestShows) {
-        cout << "\nName: " << show.name << endl;
-        cout << "Category: " << show.category << endl;
+        cout << "\nName: " << decode(show.name) << endl;
+        cout << "Category: " << decode(show.category) << endl;
         cout << "Start Time: " << (show.startHour < 10 ? "0" + to_string(show.startHour) : to_string(show.startHour))
              << ":" << (show.startMinute < 10 ? "0" + to_string(show.startMinute) : to_string(show.startMinute)) << endl;
         cout << "Duration: " << show.duration << endl;
