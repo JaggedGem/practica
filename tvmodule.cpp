@@ -38,6 +38,25 @@ void createFileIfNotExists(const string& fileName) {
     }
 }
 
+string generateNextChannelId() {
+    int maxId = 0;
+    
+    // Find highest existing ID
+    for (const auto& c : channels) {
+        try {
+            int currentId = stoi(c.code);
+            maxId = max(maxId, currentId);
+        } catch (const invalid_argument&) {
+            // Skip non-numeric IDs
+        } catch (const out_of_range&) {
+            // Skip IDs that are too large
+        }
+    }
+    
+    // Return next ID as string
+    return to_string(maxId + 1);
+}
+
 void allShows() {
     if (programs.empty()) {
         cout << "No shows available." << endl;
@@ -198,8 +217,8 @@ void addShow(string name, string category, const string& startTime, int duration
     cout << "Show added successfully." << endl;
 }
 
-void addChannel(string code, string name, string originCountry) {
-    if (code.empty() || name.empty() || originCountry.empty()) {
+void addChannel(string name, string originCountry) {
+    if (name.empty() || originCountry.empty()) {
         cout << "Invalid input. Please provide valid channel details." << endl;
         return;
     }
@@ -207,12 +226,13 @@ void addChannel(string code, string name, string originCountry) {
     string encName = encode(name);
     string encCountry = encode(originCountry);
 
-    if (any_of(channels.begin(), channels.end(), [&code](const channel& c) { return c.code == code; }) ||
-        any_of(channels.begin(), channels.end(), [&encName](const channel& c) { return c.name == encName; })) {
-        cout << "Channel with this code or name already exists." << endl;
+    if (any_of(channels.begin(), channels.end(), [&encName](const channel& c) { return c.name == encName; })) {
+        cout << "Channel with this name already exists." << endl;
         return;
-        }
+    }
 
+    string code = generateNextChannelId();
+    
     channel c;
     c.code = code;
     c.name = encName;
@@ -223,6 +243,8 @@ void addChannel(string code, string name, string originCountry) {
     ofstream o("Channel.txt", ios::app);
     o << c.code << ' ' << c.name << ' ' << c.originCountry << endl;
     o.close();
+    
+    cout << "Channel added successfully with ID: " << code << endl;
 }
 
 void deleteShow(const string& name) {
@@ -431,9 +453,9 @@ void editShow(const string& name, string newName, string newCategory, string new
     }
 }
 
-void editChannel(const string& name, string newCode, string newName, string newOriginCountry) {
+void editChannel(const string& name, string newName, string newOriginCountry) {
     if (name.empty()) {
-        cout << "Invalid input. Please provide valid show details." << endl;
+        cout << "Invalid input. Please provide valid channel details." << endl;
         return;
     }
 
@@ -442,26 +464,8 @@ void editChannel(const string& name, string newCode, string newName, string newO
     if (it != channels.end()) {
         cout << "Editing channel: " << decode(it->name) << endl;
 
-        if (newCode.empty() || newName.empty() || newOriginCountry.empty()) {
+        if (newName.empty() || newOriginCountry.empty()) {
             cout << "Enter new details (leave blank to keep current value):" << endl;
-        }
-
-        if (newCode.empty()) {
-            cout << "Code: ";
-            getline(cin, newCode);
-            if (any_of(channels.begin(), channels.end(), [&newCode](const channel& c) { return c.code == newCode; })) {
-                cout << "Channel with this code already exists." << endl;
-                return;
-            }
-            if (!newCode.empty()) {
-                it->code = move(newCode);
-            }
-        } else {
-            if (any_of(channels.begin(), channels.end(), [&newCode](const channel& c) { return c.code == newCode; })) {
-                cout << "Channel with this code already exists." << endl;
-                return;
-            }
-            it->code = move(newCode);
         }
 
         if (newName.empty()) {
@@ -478,7 +482,8 @@ void editChannel(const string& name, string newCode, string newName, string newO
             }
         } else {
             newName = encode(newName);
-            if (any_of(channels.begin(), channels.end(), [&newName](const channel& c) { return c.name == newName; })) {
+            if (any_of(channels.begin(), channels.end(), [&newName, &it](const channel& c) { 
+                return c.name == newName && c.name != it->name; })) {
                 cout << "Channel with this name already exists." << endl;
                 return;
             }
@@ -834,7 +839,7 @@ void averageShow() {
 
 void showMenu() {
     int choice;
-    string name, category, dayOfWeek, channelCode, code, originCountry;
+    string name, category, dayOfWeek, channelCode, originCountry;
     int duration;
 
     do {
@@ -897,13 +902,11 @@ void showMenu() {
                 break;
             }
             case 4:
-                cout << "Enter channel code: ";
-                getline(cin, code);
                 cout << "Enter channel name: ";
                 getline(cin, name);
                 cout << "Enter origin country: ";
                 getline(cin, originCountry);
-                addChannel(code, name, originCountry);
+                addChannel(name, originCountry);
                 break;
             case 5:
                 cout << "Enter name of show to delete: ";
@@ -951,3 +954,4 @@ void showMenu() {
         }
     } while (choice != 14);
 }
+

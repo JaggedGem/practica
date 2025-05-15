@@ -4,50 +4,55 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 struct show {
-    std::string name;
-    std::string category;
+    string name;
+    string category;
     int startHour;
     int startMinute;
     int duration;        // in minutes
-    std::string dayOfWeek;
-    std::string channelCode;
+    string dayOfWeek;
+    string channelCode;
 };
 
 struct channel {
-    std::string code;
-    std::string name;
-    std::string originCountry;
+    string code;
+    string name;
+    string originCountry;
 };
 
 // Global containers
-extern std::vector<show> programs;
-extern std::vector<channel> channels;
+extern vector<show> programs;
+extern vector<channel> channels;
 
 // File utilities
-bool fileExists(const std::string& fileName);
-void createFileIfNotExists(const std::string& fileName);
+bool fileExists(const string& fileName);
+void createFileIfNotExists(const string& fileName);
 
 // Display
 void allShows();
 void allChannels();
 
 // CRUD operations
-void addShow(std::string name, std::string category, const std::string& startTime, int duration, std::string dayOfWeek, std::string channelCode);
-void addChannel(std::string code, std::string name, std::string originCountry);
-void deleteShow(const std::string& name);
-void deleteChannel(const std::string& name);
-void editShow(const std::string& name, std::string newName = "", std::string newCategory = "", std::string newStartTime = "", int newDuration = 0, std::string newDayOfWeek = "", std::string newChannelCode = "");
-void editChannel(const std::string& name, std::string newCode = "", std::string newName = "", std::string newOriginCountry = "");
+void addShow(string name, string category, const string& startTime, int duration, string dayOfWeek, string channelCode);
+void addChannel(string name, string originCountry);
+void deleteShow(const string& name);
+void deleteChannel(const string& name);
+void editShow(const string& name, string newName = "", string newCategory = "", string newStartTime = "", int newDuration = 0, string newDayOfWeek = "", string newChannelCode = "");
+void editChannel(const string& name, string newName = "", string newOriginCountry = "");
 
 // Summaries and queries
 void broadcastSummary();
-void specificDayShow(const std::string& day);
+void specificDayShow(const string& day);
 void maxShow();
 void minShow();
 void averageShow();
 
 // Menu
 void showMenu();
+
+// ID generation
+string generateNextChannelId();
 
 #endif // TVMODULE_H
