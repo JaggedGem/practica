@@ -13,6 +13,18 @@ using namespace std;
 vector<show> programs;
 vector<channel> channels;
 
+static string encode(const string& s) {
+    string r;
+    for (char c : s) r += (c == ' ' ? '_' : c);
+    return r;
+}
+
+static string decode(const string& s) {
+    string r;
+    for (char c : s) r += (c == '_' ? ' ' : c);
+    return r;
+}
+
 bool fileExists(const string& fileName) {
     ifstream file(fileName);
     return file.good();
@@ -62,21 +74,26 @@ void allShows() {
 
     // Print data rows
     for (const auto& s : programs) {
-        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
-                          (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        string name = decode(s.name);
+        string category = decode(s.category);
+        string day = decode(s.dayOfWeek);
+        string channelCode = s.channelCode;
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":"
+                         + (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
         string duration = to_string(s.duration) + " min";
 
-        cout << "| " << setw(nameWidth) << s.name
-             << " | " << setw(categoryWidth) << s.category
+        cout << "| " << setw(nameWidth) << name
+             << " | " << setw(categoryWidth) << category
              << " | " << setw(timeWidth) << startTime
              << " | " << setw(durationWidth) << duration
-             << " | " << setw(dayWidth) << s.dayOfWeek
-             << " | " << setw(channelWidth) << s.channelCode << " |" << endl;
+             << " | " << setw(dayWidth) << day
+             << " | " << setw(channelWidth) << channelCode << " |" << endl;
     }
 
     cout << string(totalWidth, '-') << endl;
     cout << programs.size() << " shows found." << endl;
 }
+
 void allChannels() {
     if (channels.empty()) {
         cout << "No channels available." << endl;
@@ -106,79 +123,59 @@ void allChannels() {
     // And update the data rows to match:
     for (const auto& c : channels) {
         cout << "| " << setw(codeWidth) << c.code
-             << " | " << setw(nameWidth) << c.name
-             << " | " << setw(countryWidth) << c.originCountry << " |" << endl;
+             << " | " << setw(nameWidth) << decode(c.name)
+             << " | " << setw(countryWidth) << decode(c.originCountry) << " |" << endl;
     }
 
     cout << string(totalWidth, '-') << endl;
     cout << channels.size() << " channels found." << endl;
 }
+
 void addShow(string name, string category, const string& startTime, int duration, string dayOfWeek, string channelCode) {
     if (name.empty() || category.empty() || startTime.empty() || duration <= 0 || dayOfWeek.empty() || channelCode.empty()) {
         cout << "Invalid input. Please provide valid show details." << endl;
         return;
     }
 
-    if (any_of(programs.begin(), programs.end(), [&name](const show& s) { return s.name == name; })) {
+    string encName = encode(name);
+    string encCategory = encode(category);
+    string encDay = encode(dayOfWeek);
+
+    if (any_of(programs.begin(), programs.end(), [&encName](const show& s) { return s.name == encName; })) {
         cout << "Show with this name already exists." << endl;
         return;
     }
 
-    // Check if channel code exists
     bool channelExists = any_of(channels.begin(), channels.end(),
-                               [&channelCode](const channel& c) { return c.code == channelCode; });
+                                [&channelCode](const channel& c) { return c.code == channelCode; });
     if (!channelExists) {
         cout << "Error: Channel code does not exist. Please enter a valid channel code." << endl;
         return;
     }
 
-    // Parse and validate start time
     int startHour = 0, startMinute = 0;
-    try {
-        // Find the position of the colon
-        size_t colonPos = startTime.find(':');
-        if (colonPos != string::npos) {
-            // Extract hours and minutes
-            string hourStr = startTime.substr(0, colonPos);
-            string minStr = startTime.substr(colonPos + 1);
-
-            // Convert to integers
-            startHour = stoi(hourStr);
-            startMinute = stoi(minStr);
-
-            // Validate the time
-            if (startHour < 0 || startHour > 24 || startMinute < 0 || startMinute > 59) {
-                cout << "Invalid time values. Hours must be 0-24, minutes 0-59." << endl;
-                return;
-            }
-        } else {
-            cout << "Invalid time format. Use HH:MM format." << endl;
-            return;
-        }
-    } catch (const exception& e) {
-        cout << "Error parsing time: " << e.what() << endl;
-        return;
+    size_t colonPos = startTime.find(':');
+    if (colonPos != string::npos) {
+        startHour = stoi(startTime.substr(0, colonPos));
+        startMinute = stoi(startTime.substr(colonPos + 1));
     }
 
     show s;
-    s.name = move(name);
-    s.category = move(category);
+    s.name = encName;
+    s.category = encCategory;
     s.startHour = startHour;
     s.startMinute = startMinute;
     s.duration = duration;
-    s.dayOfWeek = move(dayOfWeek);
-    s.channelCode = move(channelCode);
+    s.dayOfWeek = encDay;
+    s.channelCode = channelCode;
     programs.push_back(s);
 
-    if (!fileExists("Program.txt")) {
-        createFileIfNotExists("Program.txt");
-    }
-
+    createFileIfNotExists("Program.txt");
     ofstream o("Program.txt", ios::app);
-    o << endl << s.name << " " << s.category << " "
-      << (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) << ":"
-      << (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute))
-      << " " << s.duration << " " << s.dayOfWeek << " " << s.channelCode;
+    o << s.name << ' ' << s.category << ' '
+      << (s.startHour < 10 ? "0" : "") << s.startHour << ':'
+      << (s.startMinute < 10 ? "0" : "") << s.startMinute << ' '
+      << s.duration << ' ' << s.dayOfWeek << ' ' << s.channelCode << endl;
     o.close();
 
     cout << "Show added successfully." << endl;
@@ -186,27 +183,28 @@ void addShow(string name, string category, const string& startTime, int duration
 
 void addChannel(string code, string name, string originCountry) {
     if (code.empty() || name.empty() || originCountry.empty()) {
-        cout << "Invalid input. Please provide valid show details." << endl;
+        cout << "Invalid input. Please provide valid channel details." << endl;
         return;
     }
 
-    if (any_of(channels.begin(), channels.end(), [&code](const channel& c) { return c.code == code; }) || any_of(channels.begin(), channels.end(), [&name](const channel& c) { return c.name == name; })) {
+    string encName = encode(name);
+    string encCountry = encode(originCountry);
+
+    if (any_of(channels.begin(), channels.end(), [&code](const channel& c) { return c.code == code; }) ||
+        any_of(channels.begin(), channels.end(), [&encName](const channel& c) { return c.name == encName; })) {
         cout << "Channel with this code or name already exists." << endl;
         return;
-    }
+        }
 
     channel c;
-    c.code = move(code);
-    c.name = move(name);
-    c.originCountry = move(originCountry);
+    c.code = code;
+    c.name = encName;
+    c.originCountry = encCountry;
     channels.push_back(c);
 
-    if (!fileExists("Channel.txt")) {
-        createFileIfNotExists("Channel.txt");
-    }
-
+    createFileIfNotExists("Channel.txt");
     ofstream o("Channel.txt", ios::app);
-    o << endl << c.code << " " << c.name << " " << c.originCountry;
+    o << c.code << ' ' << c.name << ' ' << c.originCountry << endl;
     o.close();
 }
 
@@ -215,7 +213,9 @@ void deleteShow(const string& name) {
         cout << "Invalid input. Please provide valid show details." << endl;
         return;
     }
-    auto it = remove_if(programs.begin(), programs.end(), [&name](const show& s) { return s.name == name; });
+
+    string encName = encode(name);
+    auto it = remove_if(programs.begin(), programs.end(), [&encName](const show& s) { return s.name == encName; });
     if (it != programs.end()) {
         programs.erase(it, programs.end());
         cout << "Show deleted successfully." << endl;
@@ -239,7 +239,9 @@ void deleteChannel(const string& name) {
         cout << "Invalid input. Please provide valid show details." << endl;
         return;
     }
-    auto it = remove_if(channels.begin(), channels.end(), [&name](const channel& c) { return c.name == name; });
+
+    string encName = encode(name);
+    auto it = remove_if(channels.begin(), channels.end(), [&encName](const channel& c) { return c.name == encName; });
     if (it != channels.end()) {
         channels.erase(it, channels.end());
         cout << "Channel deleted successfully." << endl;
@@ -653,8 +655,17 @@ void showMenu() {
         cout << "13. Average show" << endl;
         cout << "14. Exit" << endl;
         cout << "Enter your choice: ";
-        cin >> choice;
-        cin.ignore();
+
+        string input;
+        getline(cin, input);
+
+        // Try to convert the input to an integer
+        try {
+            choice = stoi(input);
+        } catch (const exception&) {
+            cout << "Invalid input. Please enter a number." << endl;
+            continue; // Skip the rest of the loop iteration
+        }
 
         switch (choice) {
             case 1:
@@ -672,8 +683,13 @@ void showMenu() {
                 cout << "Enter start time (HH:MM): ";
                 getline(cin, startTime);
                 cout << "Enter duration (minutes): ";
-                cin >> duration;
-                cin.ignore();
+                getline(cin, input);
+                try {
+                    duration = stoi(input);
+                } catch (const exception&) {
+                    cout << "Invalid duration. Operation cancelled." << endl;
+                    continue;
+                }
                 cout << "Enter day of week: ";
                 getline(cin, dayOfWeek);
                 cout << "Enter channel code: ";
