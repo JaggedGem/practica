@@ -49,14 +49,15 @@ void allShows() {
     }
 
     // Print header
-    int totalWidth = nameWidth + categoryWidth + timeWidth + durationWidth + dayWidth + channelWidth + 7; // +7 for separators
-    cout << string(totalWidth, '-');
+    int totalWidth = nameWidth + categoryWidth + timeWidth + durationWidth + dayWidth + channelWidth + (6 * 3);
+
+    cout << endl << string(totalWidth, '-') << endl;
     cout << "| " << left << setw(nameWidth) << "Name"
-         << "| " << setw(categoryWidth) << "Category"
-         << "| " << setw(timeWidth) << "Start Time"
-         << "| " << setw(durationWidth) << "Duration"
-         << "| " << setw(dayWidth) << "Day"
-         << "| " << setw(channelWidth) << "Channel Code" << " |" << endl;
+         << " | " << setw(categoryWidth) << "Category"
+         << " | " << setw(timeWidth) << "Start Time"
+         << " | " << setw(durationWidth) << "Duration"
+         << " | " << setw(dayWidth) << "Day"
+         << " | " << setw(channelWidth) << "Channel Code" << " |" << endl;
     cout << string(totalWidth, '-') << endl;
 
     // Print data rows
@@ -66,11 +67,11 @@ void allShows() {
         string duration = to_string(s.duration) + " min";
 
         cout << "| " << setw(nameWidth) << s.name
-             << "| " << setw(categoryWidth) << s.category
-             << "| " << setw(timeWidth) << startTime
-             << "| " << setw(durationWidth) << duration
-             << "| " << setw(dayWidth) << s.dayOfWeek
-             << "| " << setw(channelWidth) << s.channelCode << " |" << endl;
+             << " | " << setw(categoryWidth) << s.category
+             << " | " << setw(timeWidth) << startTime
+             << " | " << setw(durationWidth) << duration
+             << " | " << setw(dayWidth) << s.dayOfWeek
+             << " | " << setw(channelWidth) << s.channelCode << " |" << endl;
     }
 
     cout << string(totalWidth, '-') << endl;
@@ -85,7 +86,7 @@ void allChannels() {
     // First pass: determine needed column widths based on content
     int codeWidth = 4;      // minimum width for "Code"
     int nameWidth = 4;      // minimum width for "Name"
-    int countryWidth = 7;   // minimum width for "Country"
+    int countryWidth = 17;   // minimum width for "Country"
 
     // Determine maximum content width for each column
     for (const auto& c : channels) {
@@ -95,18 +96,18 @@ void allChannels() {
     }
 
     // Print header
-    int totalWidth = codeWidth + nameWidth + countryWidth + 4; // +4 for separators
+    int totalWidth = codeWidth + nameWidth + countryWidth + (3 * 3) + 1;
     cout << string(totalWidth, '-') << endl;
     cout << "| " << left << setw(codeWidth) << "Code"
-         << "| " << setw(nameWidth) << "Name"
-         << "| " << setw(countryWidth) << "Country of Origin" << " |" << endl;
+         << " | " << setw(nameWidth) << "Name"
+         << " | " << setw(countryWidth) << "Country of Origin" << " |" << endl;
     cout << string(totalWidth, '-') << endl;
 
-    // Print data rows
+    // And update the data rows to match:
     for (const auto& c : channels) {
         cout << "| " << setw(codeWidth) << c.code
-             << "| " << setw(nameWidth) << c.name
-             << "| " << setw(countryWidth) << c.originCountry << " |" << endl;
+             << " | " << setw(nameWidth) << c.name
+             << " | " << setw(countryWidth) << c.originCountry << " |" << endl;
     }
 
     cout << string(totalWidth, '-') << endl;
