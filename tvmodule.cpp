@@ -467,8 +467,9 @@ void editChannel(const string& name, string newCode, string newName, string newO
         if (newName.empty()) {
             cout << "Name: ";
             getline(cin, newName);
-            newName = encode(name);
-            if (any_of(channels.begin(), channels.end(), [&newName](const channel& c) { return c.name == newName; })) {
+            newName = encode(newName);  // Fix: encode newName, not name
+            if (any_of(channels.begin(), channels.end(), [&](const channel& c) {
+                return c.name == newName && c.name != it->name; })) {
                 cout << "Channel with this name already exists." << endl;
                 return;
             }
@@ -568,7 +569,7 @@ void specificDayShow(const string& day) {
         return;
     }
 
-    cout << endl << "Shows on " << day << ":" << endl;
+    // Sort shows by start time
     sort(sortedShows.begin(), sortedShows.end(), [](const show& a, const show& b) {
         if (a.startHour != b.startHour) {
             return a.startHour < b.startHour;
@@ -576,17 +577,73 @@ void specificDayShow(const string& day) {
         return a.startMinute < b.startMinute;
     });
 
+    // First pass: determine needed column widths based on content
+    int nameWidth = 4;      // minimum width for "Name"
+    int categoryWidth = 8;  // minimum width for "Category"
+    int timeWidth = 10;     // minimum width for "Start Time"
+    int durationWidth = 8;  // minimum width for "Duration"
+    int channelWidth = 12;  // minimum width for "Channel Code"
+
+    // Determine maximum content width for each column
     for (const auto& s : sortedShows) {
-        cout << endl;
-        cout << "Name: " << decode(s.name) << endl;
-        cout << "Category: " << decode(s.category) << endl;
-        cout << "Start Time: " << (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) << ":" << (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute)) << endl;
-        cout << "Duration: " << s.duration << endl;
-        cout << "Channel Code: " << s.channelCode << endl;
+        nameWidth = max(nameWidth, (int)decode(s.name).length());
+        categoryWidth = max(categoryWidth, (int)decode(s.category).length());
+        channelWidth = max(channelWidth, (int)s.channelCode.length());
+
+        // Calculate duration string length and consider it for column width
+        string durationStr = to_string(s.duration) + " min";
+        durationWidth = max(durationWidth, (int)durationStr.length());
+
+        // Calculate time string length
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                          (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        timeWidth = max(timeWidth, (int)startTime.length());
     }
+
+    // Add padding (1 space on each side)
+    nameWidth += 2;
+    categoryWidth += 2;
+    timeWidth += 2;
+    durationWidth += 2;
+    channelWidth += 2;
+
+    // Print header
+    int totalWidth = nameWidth + categoryWidth + timeWidth + durationWidth + channelWidth + 6; // 6 for the separators
+    cout << endl << "Shows on " << day << ":" << endl;
+    cout << string(totalWidth, '-') << endl;
+    cout << "|" << setw(nameWidth) << left << " Name"
+         << "|" << setw(categoryWidth) << " Category"
+         << "|" << setw(timeWidth) << " Start Time"
+         << "|" << setw(durationWidth) << " Duration"
+         << "|" << setw(channelWidth) << " Channel Code" << "|" << endl;
+    cout << string(totalWidth, '-') << endl;
+
+    // Print data rows
+    for (const auto& s : sortedShows) {
+        string name = decode(s.name);
+        string category = decode(s.category);
+        string channelCode = s.channelCode;
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                         (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        string durationStr = to_string(s.duration) + " min";
+
+        cout << "|" << setw(nameWidth) << " " + name
+             << "|" << setw(categoryWidth) << " " + category
+             << "|" << setw(timeWidth) << " " + startTime
+             << "|" << setw(durationWidth) << " " + durationStr
+             << "|" << setw(channelWidth) << " " + channelCode << "|" << endl;
+    }
+
+    cout << string(totalWidth, '-') << endl;
+    cout << sortedShows.size() << " shows found." << endl;
 }
 
 void maxShow() {
+    if (programs.empty()) {
+        cout << "No shows available." << endl;
+        return;
+    }
+
     int maxDuration = 0;
     vector<show> longestShows;
 
@@ -604,19 +661,79 @@ void maxShow() {
         }
     }
 
-    cout << "Shows with the longest duration (" << maxDuration << " minutes):" << endl;
-    for (const auto& show : longestShows) {
-        cout << "\nName: " << decode(show.name) << endl;
-        cout << "Category: " << decode(show.category) << endl;
-        cout << "Start Time: " << (show.startHour < 10 ? "0" + to_string(show.startHour) : to_string(show.startHour))
-             << ":" << (show.startMinute < 10 ? "0" + to_string(show.startMinute) : to_string(show.startMinute)) << endl;
-        cout << "Duration: " << show.duration << endl;
-        cout << "Day of Week: " << show.dayOfWeek << endl;
-        cout << "Channel Code: " << show.channelCode << endl;
+    // First pass: determine needed column widths based on content
+    int nameWidth = 4;      // minimum width for "Name"
+    int categoryWidth = 8;  // minimum width for "Category"
+    int timeWidth = 10;     // minimum width for "Start Time"
+    int durationWidth = 8;  // minimum width for "Duration"
+    int dayWidth = 3;       // minimum width for "Day"
+    int channelWidth = 12;  // minimum width for "Channel Code"
+
+    // Determine maximum content width for each column
+    for (const auto& s : longestShows) {
+        nameWidth = max(nameWidth, (int)decode(s.name).length());
+        categoryWidth = max(categoryWidth, (int)decode(s.category).length());
+        dayWidth = max(dayWidth, (int)decode(s.dayOfWeek).length());
+        channelWidth = max(channelWidth, (int)s.channelCode.length());
+
+        // Calculate duration string length and consider it for column width
+        string durationStr = to_string(s.duration) + " min";
+        durationWidth = max(durationWidth, (int)durationStr.length());
+
+        // Calculate time string length
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                          (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        timeWidth = max(timeWidth, (int)startTime.length());
     }
+
+    // Add padding (1 space on each side)
+    nameWidth += 2;
+    categoryWidth += 2;
+    timeWidth += 2;
+    durationWidth += 2;
+    dayWidth += 2;
+    channelWidth += 2;
+
+    // Print header
+    int totalWidth = nameWidth + categoryWidth + timeWidth + durationWidth + dayWidth + channelWidth + 7; // 7 for the separators
+    cout << endl << "Shows with the longest duration (" << maxDuration << " minutes):" << endl;
+    cout << string(totalWidth, '-') << endl;
+    cout << "|" << setw(nameWidth) << left << " Name"
+         << "|" << setw(categoryWidth) << " Category"
+         << "|" << setw(timeWidth) << " Start Time"
+         << "|" << setw(durationWidth) << " Duration"
+         << "|" << setw(dayWidth) << " Day"
+         << "|" << setw(channelWidth) << " Channel Code" << "|" << endl;
+    cout << string(totalWidth, '-') << endl;
+
+    // Print data rows
+    for (const auto& s : longestShows) {
+        string name = decode(s.name);
+        string category = decode(s.category);
+        string day = decode(s.dayOfWeek);
+        string channelCode = s.channelCode;
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                         (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        string durationStr = to_string(s.duration) + " min";
+
+        cout << "|" << setw(nameWidth) << " " + name
+             << "|" << setw(categoryWidth) << " " + category
+             << "|" << setw(timeWidth) << " " + startTime
+             << "|" << setw(durationWidth) << " " + durationStr
+             << "|" << setw(dayWidth) << " " + day
+             << "|" << setw(channelWidth) << " " + channelCode << "|" << endl;
+    }
+
+    cout << string(totalWidth, '-') << endl;
+    cout << longestShows.size() << " shows found." << endl;
 }
 
 void minShow() {
+    if (programs.empty()) {
+        cout << "No shows available." << endl;
+        return;
+    }
+
     int minDuration = INT_MAX;
     vector<show> shortestShows;
 
@@ -634,16 +751,71 @@ void minShow() {
         }
     }
 
-    cout << "Shows with the shortest duration (" << minDuration << " minutes):" << endl;
-    for (const auto& show : shortestShows) {
-        cout << "\nName: " << decode(show.name) << endl;
-        cout << "Category: " << decode(show.category) << endl;
-        cout << "Start Time: " << (show.startHour < 10 ? "0" + to_string(show.startHour) : to_string(show.startHour))
-             << ":" << (show.startMinute < 10 ? "0" + to_string(show.startMinute) : to_string(show.startMinute)) << endl;
-        cout << "Duration: " << show.duration << endl;
-        cout << "Day of Week: " << show.dayOfWeek << endl;
-        cout << "Channel Code: " << show.channelCode << endl;
+    // First pass: determine needed column widths based on content
+    int nameWidth = 4;      // minimum width for "Name"
+    int categoryWidth = 8;  // minimum width for "Category"
+    int timeWidth = 10;     // minimum width for "Start Time"
+    int durationWidth = 8;  // minimum width for "Duration"
+    int dayWidth = 3;       // minimum width for "Day"
+    int channelWidth = 12;  // minimum width for "Channel Code"
+
+    // Determine maximum content width for each column
+    for (const auto& s : shortestShows) {
+        nameWidth = max(nameWidth, (int)decode(s.name).length());
+        categoryWidth = max(categoryWidth, (int)decode(s.category).length());
+        dayWidth = max(dayWidth, (int)decode(s.dayOfWeek).length());
+        channelWidth = max(channelWidth, (int)s.channelCode.length());
+
+        // Calculate duration string length and consider it for column width
+        string durationStr = to_string(s.duration) + " min";
+        durationWidth = max(durationWidth, (int)durationStr.length());
+
+        // Calculate time string length
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                          (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        timeWidth = max(timeWidth, (int)startTime.length());
     }
+
+    // Add padding (1 space on each side)
+    nameWidth += 2;
+    categoryWidth += 2;
+    timeWidth += 2;
+    durationWidth += 2;
+    dayWidth += 2;
+    channelWidth += 2;
+
+    // Print header
+    int totalWidth = nameWidth + categoryWidth + timeWidth + durationWidth + dayWidth + channelWidth + 7; // 7 for the separators
+    cout << endl << "Shows with the shortest duration (" << minDuration << " minutes):" << endl;
+    cout << string(totalWidth, '-') << endl;
+    cout << "|" << setw(nameWidth) << left << " Name"
+         << "|" << setw(categoryWidth) << " Category"
+         << "|" << setw(timeWidth) << " Start Time"
+         << "|" << setw(durationWidth) << " Duration"
+         << "|" << setw(dayWidth) << " Day"
+         << "|" << setw(channelWidth) << " Channel Code" << "|" << endl;
+    cout << string(totalWidth, '-') << endl;
+
+    // Print data rows
+    for (const auto& s : shortestShows) {
+        string name = decode(s.name);
+        string category = decode(s.category);
+        string day = decode(s.dayOfWeek);
+        string channelCode = s.channelCode;
+        string startTime = (s.startHour < 10 ? "0" + to_string(s.startHour) : to_string(s.startHour)) + ":" +
+                         (s.startMinute < 10 ? "0" + to_string(s.startMinute) : to_string(s.startMinute));
+        string durationStr = to_string(s.duration) + " min";
+
+        cout << "|" << setw(nameWidth) << " " + name
+             << "|" << setw(categoryWidth) << " " + category
+             << "|" << setw(timeWidth) << " " + startTime
+             << "|" << setw(durationWidth) << " " + durationStr
+             << "|" << setw(dayWidth) << " " + day
+             << "|" << setw(channelWidth) << " " + channelCode << "|" << endl;
+    }
+
+    cout << string(totalWidth, '-') << endl;
+    cout << shortestShows.size() << " shows found." << endl;
 }
 
 void averageShow() {
