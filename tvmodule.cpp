@@ -199,8 +199,19 @@ void addShow(const string& name, const string& category, const string& startTime
     int startHour = 0, startMinute = 0;
     size_t colonPos = startTime.find(':');
     if (colonPos != string::npos) {
-        startHour = stoi(startTime.substr(0, colonPos));
-        startMinute = stoi(startTime.substr(colonPos + 1));
+        try {
+            startHour = stoi(startTime.substr(0, colonPos));
+            startMinute = stoi(startTime.substr(colonPos + 1));
+
+            // Validate time ranges
+            if (startHour < 0 || startHour > 23 || startMinute < 0 || startMinute > 59) {
+                cout << "Invalid time. Hours must be 0-23, minutes must be 0-59." << endl;
+                return; // or set to default values
+            }
+        } catch (const exception& e) {
+            cout << "Invalid time format: " << e.what() << endl;
+            return; // or set to default values
+        }
     }
 
     show s;
@@ -373,11 +384,11 @@ void editShow(const string& name, string newName, string newCategory, string new
                     int minute = stoi(minStr);
 
                     // Validate the time
-                    if (hour >= 0 && hour <= 24 && minute >= 0 && minute <= 59) {
+                    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
                         it->startHour = hour;
                         it->startMinute = minute;
                     } else {
-                        cout << "Invalid time values. Hours must be 0-24, minutes 0-59." << endl;
+                        cout << "Invalid time values. Hours must be 0-23, minutes 0-59." << endl;
                     }
                 } else {
                     cout << "Invalid time format. Use HH:MM format." << endl;
