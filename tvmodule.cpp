@@ -841,17 +841,19 @@ void minShow() {
     cout << shortestShows.size() << " shows found." << endl;
 }
 
-void averageShow() {
+void averageShow(const string& category) {
     int sum = 0, count = 0;
     for (auto& s : programs) {
-        sum += s.duration;
-        count++;
+        if (s.category == encode(category)) {
+            sum += s.duration;
+            count++;
+        }
     }
     if (count == 0) {
-        cout << "No shows available." << endl;
+        cout << "No shows available in the " << category << " category." << endl;
     } else {
         double average = static_cast<double>(sum) / count;
-        cout << "Average duration of shows: " << average << " minutes." << endl;
+        cout << "Average duration of shows in category "  << category << ": " << average << " minutes." << endl;
     }
 }
 
@@ -980,7 +982,9 @@ void showMenu() {
                 break;
             case 13:
                 clearScreen();
-                averageShow();
+                cout << "Enter category name: ";
+                getline(cin, category);
+                averageShow(category);
                 break;
             case 14:
                 clearScreen();
